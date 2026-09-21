@@ -1,0 +1,13 @@
+{
+  "name": "@bull-and-cow/source",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "@nx/js": "23.2.1",
+    "@nx/workspace": "23.2.1",
+    "nx": "23.2.1"
+  }
+}
