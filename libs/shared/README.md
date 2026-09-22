@@ -1,3 +1,3 @@
-# shared
+# Shared
 
-This library was generated with [Nx](https://nx.dev).
+Спільні Zod-схеми й TypeScript-типи гри: кімнати, персональний стан матчу, повідомлення клієнта та сервера. Використовуються для валідації WebSocket-повідомлень на обох сторонах. Публічний експорт — `src/index.ts`.
