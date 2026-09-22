@@ -1,5 +1,4 @@
 packages:
-  - "web"
   - "apps/*"
   - "libs/*"
 

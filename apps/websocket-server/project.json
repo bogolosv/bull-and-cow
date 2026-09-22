@@ -20,9 +20,6 @@
         "bundle": false,
         "main": "apps/websocket-server/src/main.ts",
         "tsConfig": "apps/websocket-server/tsconfig.app.json",
-        "assets": [
-          "apps/websocket-server/src/assets"
-        ],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,

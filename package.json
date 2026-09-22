@@ -2,7 +2,15 @@
   "name": "@bull-and-cow/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "test:game": "node --test scripts/test-game.cjs",
+    "test:lobby": "node --test scripts/test-lobby.cjs",
+    "storybook": "storybook dev -p 6006 -c libs/ui/.storybook --no-open --disable-telemetry",
+    "build-storybook": "storybook build -c libs/ui/.storybook -o dist/storybook/ui --disable-telemetry",
+    "typecheck:ui": "tsc -p libs/ui/tsconfig.json",
+    "test:ui-isolation": "node --test scripts/test-ui-isolation.cjs",
+    "test:i18n": "node --test scripts/test-i18n.cjs"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -14,6 +22,9 @@
     "@nx/next": "23.2.1",
     "@nx/node": "23.2.1",
     "@nx/workspace": "23.2.1",
+    "@storybook/addon-a11y": "^10.6.0",
+    "@storybook/addon-docs": "^10.6.0",
+    "@storybook/react-vite": "^10.6.0",
     "@swc-node/register": "~1.11.1",
     "@swc/cli": "~0.8.1",
     "@swc/core": "~1.15.5",
@@ -22,6 +33,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "esbuild": "^0.27.0",
     "eslint": "^9.8.0",
     "eslint-config-next": "^16.1.6",
@@ -31,16 +43,20 @@
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "5.0.0",
     "nx": "23.2.1",
-    "sass": "1.97.2",
+    "prettier": "^3.9.8",
+    "storybook": "^10.6.0",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.58.0"
+    "typescript-eslint": "^8.58.0",
+    "vite": "^7.3.6"
   },
   "dependencies": {
     "next": "~16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "unique-names-generator": "^4.7.1",
     "ws": "^8.21.3",
     "zod": "^4.6.5"
-  }
+  },
+  "packageManager": "pnpm@12.5.1"
 }
