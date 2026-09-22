@@ -1,0 +1,13 @@
+.mascot {
+  width: 100%;
+  height: 100%;
+  color: var(--color-mascot-outline);
+}
+.ghost {
+  opacity: var(--opacity-ghost);
+  filter: grayscale(0.5);
+}
+.mascot[data-size="medium"] {
+  width: var(--size-90);
+  height: var(--size-90);
+}

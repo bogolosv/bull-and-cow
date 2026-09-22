@@ -1,0 +1,101 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) 0;
+  animation: arrive 350ms ease-out both;
+}
+.number {
+  color: var(--color-subtle);
+  font-size: var(--font-size-10);
+}
+.digits {
+  display: flex;
+  gap: var(--space-4);
+  flex: 1;
+}
+.digit {
+  width: var(--space-32);
+  height: var(--space-40);
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-tinted);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-18);
+  animation: flip 420ms ease-out both;
+  animation-delay: calc(var(--index) * 75ms);
+}
+.results {
+  display: flex;
+  gap: var(--space-8);
+}
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-muted);
+  animation: score 400ms 300ms ease-out both;
+}
+.bulls {
+  color: var(--color-accent-ink);
+}
+.cows {
+  color: var(--color-warning);
+}
+.mascot {
+  width: var(--space-28);
+  height: var(--space-28);
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes flip {
+  from {
+    transform: rotateX(-80deg);
+    background: var(--color-accent-line);
+  }
+  to {
+    transform: rotateX(0);
+    background: var(--color-surface-tinted);
+  }
+}
+@keyframes score {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (max-width: 360px) {
+  .row {
+    gap: var(--space-8);
+  }
+  .digit {
+    width: var(--space-28);
+  }
+  .results {
+    gap: var(--space-4);
+  }
+  .mascot {
+    width: var(--space-24);
+    height: var(--space-24);
+  }
+}

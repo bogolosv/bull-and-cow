@@ -1,0 +1,52 @@
+.nameField label {
+  display: block;
+  margin: 0 0 var(--space-8) var(--space-2);
+  color: var(--color-subtle);
+  font-size: var(--font-size-11);
+  font-weight: var(--font-weight-semibold);
+}
+.nameInput {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: 0 var(--space-16);
+  background: var(--color-surface-soft);
+  border: var(--space-1) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  height: var(--space-56);
+}
+.nameInput > span:first-child {
+  font-size: var(--font-size-24);
+  color: var(--color-cow-patch);
+}
+.nameInput input {
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--color-text);
+  border: 0;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-semibold);
+  outline: none;
+}
+.nameInput:focus-within {
+  outline: var(--space-2) solid var(--color-accent-line);
+  outline-offset: var(--space-2);
+}
+.pencil {
+  color: var(--color-cow-patch);
+  font-size: var(--font-size-21);
+}
+.inputError {
+  color: var(--color-danger);
+  font-size: var(--font-size-11);
+  margin: var(--space-8) 0 0;
+}
+.nameInput:has(input[aria-invalid="true"]) {
+  border-color: var(--color-danger);
+}
+.nameInput:has(input:disabled) {
+  opacity: var(--opacity-disabled);
+}

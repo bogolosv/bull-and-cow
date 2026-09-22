@@ -1,0 +1,35 @@
+.counter {
+  display: grid;
+  place-items: center;
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-tinted);
+  color: var(--color-subtle);
+  font-size: var(--font-size-10);
+  font-weight: var(--font-weight-semibold);
+}
+.playerBadge {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-9);
+  font-weight: var(--font-weight-semibold);
+}
+.playerBadge > span {
+  margin-left: var(--space-4);
+}
+.opponentBadge {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+.waitingBadge {
+  background: transparent;
+  color: var(--color-cow-patch);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}

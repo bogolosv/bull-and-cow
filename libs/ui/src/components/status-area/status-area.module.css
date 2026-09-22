@@ -1,0 +1,13 @@
+.startState {
+  margin: var(--space-28) 0 0;
+  min-height: var(--size-110);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.startState > p {
+  color: var(--color-subtle);
+  font-size: var(--font-size-11);
+  margin: var(--space-20) 0 0;
+}

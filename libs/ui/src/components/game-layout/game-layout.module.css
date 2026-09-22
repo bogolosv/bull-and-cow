@@ -1,0 +1,82 @@
+.gameShell {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-40) var(--space-24);
+  isolation: isolate;
+}
+.gameContent {
+  width: min(100%, var(--size-game-content));
+  position: relative;
+  z-index: 1;
+}
+.ambient {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: var(--radius-round);
+  filter: blur(var(--space-48));
+  opacity: 0.48;
+}
+.ambientOne {
+  width: var(--size-470);
+  height: var(--size-470);
+  left: calc(50% - var(--size-650));
+  top: calc(50% - var(--size-360));
+  background: radial-gradient(
+    circle,
+    var(--color-accent-soft),
+    transparent 70%
+  );
+}
+.ambientTwo {
+  width: var(--size-490);
+  height: var(--size-490);
+  right: calc(50% - var(--size-650));
+  bottom: calc(50% - var(--size-460));
+  background: radial-gradient(circle, var(--color-peach), transparent 70%);
+}
+.spark {
+  position: absolute;
+  color: var(--color-accent-line);
+  font-size: var(--font-size-32);
+  pointer-events: none;
+}
+.sparkOne {
+  left: calc(50% - var(--size-340));
+  top: 32%;
+  transform: rotate(13deg);
+}
+.sparkTwo {
+  right: calc(50% - var(--size-340));
+  bottom: 27%;
+  font-size: var(--font-size-45);
+  color: var(--color-peach-edge);
+}
+.utilityRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: var(--space-32);
+  margin-bottom: 0;
+}
+@media (min-width: 900px) {
+  .gameContent {
+    transform: translateY(-12px);
+  }
+}
+@media (max-width: 520px) {
+  .gameShell {
+    padding: var(--space-20) var(--space-20) var(--space-28);
+  }
+  .spark {
+    display: none;
+  }
+}
+@media (max-width: 360px) {
+  .gameShell {
+    padding-inline: var(--space-12);
+  }
+}

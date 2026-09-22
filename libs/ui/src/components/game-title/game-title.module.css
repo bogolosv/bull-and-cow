@@ -1,0 +1,62 @@
+.gameTitle {
+  text-align: center;
+  margin: var(--space-24) 0 var(--space-28);
+}
+.mascotPair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+.titleMascot {
+  width: var(--size-86);
+  height: var(--size-86);
+  transform: rotate(-9deg);
+}
+.titleMascot:last-child {
+  transform: rotate(9deg);
+}
+.mascotPair > span {
+  color: var(--color-cow-patch);
+  font-size: var(--font-size-17);
+  margin-top: var(--space-16);
+}
+.gameTitle h1 {
+  font-size: var(--font-size-35);
+  letter-spacing: -1.4px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  margin: 0;
+}
+.gameTitle h1 span {
+  color: var(--color-cow-patch);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-27);
+}
+.gameTitle > p {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+  margin: var(--space-12) 0 0;
+  letter-spacing: 0.25px;
+}
+@media (max-width: 520px) {
+  .gameTitle {
+    margin-bottom: var(--space-24);
+  }
+  .gameTitle h1 {
+    font-size: var(--font-size-31);
+  }
+  .gameTitle h1 span {
+    font-size: var(--font-size-23);
+  }
+  .titleMascot {
+    width: var(--size-74);
+    height: var(--size-74);
+  }
+}
+@media (max-width: 360px) {
+  .gameTitle h1 {
+    font-size: var(--font-size-28);
+  }
+}

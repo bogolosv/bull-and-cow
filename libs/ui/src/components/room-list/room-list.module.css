@@ -1,0 +1,18 @@
+.roomList {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-12) 0 0;
+  max-height: var(--size-245);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.roomList li {
+  display: block;
+}
+.roomList li + li {
+  border-top: var(--space-1) solid var(--color-surface-tinted);
+}
+.roomList {
+  list-style: none;
+}

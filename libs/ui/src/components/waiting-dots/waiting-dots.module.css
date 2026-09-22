@@ -1,0 +1,31 @@
+.waitingDots {
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-12) 0;
+}
+.waitingDots i {
+  display: block;
+  height: var(--space-8);
+  width: var(--space-8);
+  background: var(--color-accent-line);
+  border-radius: var(--radius-round);
+  animation: bob var(--motion-wait) ease-in-out infinite;
+}
+.waitingDots i:nth-child(2) {
+  animation-delay: var(--motion-fast);
+  background: var(--color-border-strong);
+}
+.waitingDots i:nth-child(3) {
+  animation-delay: calc(var(--motion-fast) * 2);
+  background: var(--color-bull-muzzle);
+}
+@keyframes bob {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-6px);
+  }
+}

@@ -1,0 +1,14 @@
+.bottomNote {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+  color: var(--color-subtle);
+  font-size: var(--font-size-10);
+  margin: var(--space-24) 0 0;
+}
+.bottomNote > span {
+  font-size: var(--font-size-18);
+  color: var(--color-accent-line);
+}

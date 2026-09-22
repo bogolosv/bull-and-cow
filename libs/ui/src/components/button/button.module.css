@@ -1,0 +1,125 @@
+.playButton {
+  border: var(--space-1) solid var(--color-accent-edge);
+  background: var(--color-accent);
+  color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  min-height: var(--space-56);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  box-shadow: 0 var(--space-4) 0 var(--color-accent-edge);
+  padding: var(--space-12) var(--space-20);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-14);
+}
+
+.playButton > span:first-child {
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-regular);
+}
+
+.playButton > span:last-child {
+  margin-left: auto;
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-regular);
+}
+
+.playButton:not(:disabled):hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 var(--space-8) 0 var(--color-accent-edge);
+}
+
+.playButton:not(:disabled):active {
+  transform: translateY(var(--space-4));
+  box-shadow: 0 var(--space-1) 0 var(--color-accent-edge);
+}
+
+.joinButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  border: var(--space-1) solid var(--color-bull-muzzle);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-12);
+  background: var(--color-surface-tinted);
+  color: var(--color-accent-ink);
+  box-shadow: 0 var(--space-2) 0 var(--color-bull-muzzle);
+  font-size: var(--font-size-11);
+  font-weight: var(--font-weight-semibold);
+}
+
+.joinButton:not(:disabled):hover {
+  background: var(--color-accent-soft);
+}
+
+.joinButton:not(:disabled):active {
+  transform: translateY(var(--space-2));
+  box-shadow: 0 var(--space-1) 0 var(--color-bull-muzzle);
+}
+
+.inviteButton {
+  border: var(--space-1) solid var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: var(--space-12) var(--space-20);
+  font-size: var(--font-size-11);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-12);
+}
+
+.inviteButton:hover {
+  background: var(--color-accent-soft);
+}
+
+.textButton {
+  display: block;
+  width: fit-content;
+  margin: var(--space-28) auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-12);
+  text-decoration: none;
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-md);
+}
+
+.textButton:hover {
+  color: var(--color-accent-ink);
+  background: var(--color-surface-tinted);
+}
+
+.button {
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast),
+    box-shadow var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.button[data-full-width="true"] {
+  width: 100%;
+}
+
+.button[data-size="small"] {
+  min-height: var(--space-40);
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--font-size-11);
+}
+
+.button[data-size="large"] {
+  min-height: var(--space-56);
+}
+
+.buttonIcon {
+  display: inline-flex;
+  align-items: center;
+}

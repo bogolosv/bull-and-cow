@@ -1,0 +1,16 @@
+.textButton {
+  display: block;
+  width: fit-content;
+  margin: var(--space-28) auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-12);
+  text-decoration: none;
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-md);
+}
+.textButton:hover {
+  color: var(--color-accent-ink);
+  background: var(--color-surface-tinted);
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "types": ["node", "vite/client"],
+    "lib": ["es2020", "dom"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
+  ]
+}

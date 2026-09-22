@@ -1,0 +1,11 @@
+.errorMessage {
+  text-align: center;
+  background: var(--color-danger-soft);
+  border: var(--space-1) solid var(--color-peach-edge);
+  color: var(--color-danger);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-12);
+  line-height: 1.6;
+  padding: var(--space-12);
+  margin: var(--space-20) 0 0;
+}

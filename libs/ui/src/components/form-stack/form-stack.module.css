@@ -1,0 +1,4 @@
+.formStack {
+  display: grid;
+  gap: var(--space-16);
+}

@@ -1,0 +1,37 @@
+.emptyRooms {
+  min-height: var(--size-109);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding-top: var(--space-12);
+}
+.emptyRooms p {
+  font-size: var(--font-size-11);
+  color: var(--color-subtle);
+  margin: 0;
+}
+.tinySeats {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.tinySeats span {
+  height: var(--space-28);
+  width: var(--space-28);
+  display: grid;
+  place-items: center;
+  background: var(--color-accent-soft);
+  color: var(--color-cow-patch);
+  border-radius: var(--radius-sm);
+  transform: rotate(-9deg);
+  font-size: var(--font-size-21);
+}
+.tinySeats span + span {
+  border: var(--space-1) dashed var(--color-border-strong);
+  background: var(--color-surface-soft);
+  color: var(--color-cow-patch);
+  font-size: var(--font-size-15);
+  transform: rotate(9deg);
+}
