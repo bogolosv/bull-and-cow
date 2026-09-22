@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "test:lifecycle": "node --test --test-timeout=15000 scripts/test-lifecycle.cjs",
+    "test:lifecycle": "node --test --test-timeout=15000 scripts/test-lifecycle.cjs scripts/test-session-token.cjs",
     "test:game": "node --test scripts/test-game.cjs",
     "test:lobby": "node --test scripts/test-lobby.cjs",
     "storybook": "storybook dev -p 6006 -c libs/ui/.storybook --no-open --disable-telemetry",

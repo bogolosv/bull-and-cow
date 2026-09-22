@@ -1,11 +1,27 @@
 const KEY = "bull-cow-session";
 let memory: string | null = null;
-export function getSessionToken() {
-  try { return sessionStorage.getItem(KEY) || memory; }
-  catch { return memory; }
+
+function read(storage: "sessionStorage" | "localStorage") {
+  try {
+    return globalThis[storage].getItem(KEY);
+  } catch {
+    return null;
+  }
 }
+
+export function getSessionToken() {
+  // Keep an existing tab's identity; a reopened tab resumes the browser's
+  // most recently saved session. The server still enforces its grace period.
+  return read("sessionStorage") || read("localStorage") || memory;
+}
+
 export function saveSessionToken(token: string) {
   memory = token;
-  try { sessionStorage.setItem(KEY, token); }
-  catch { /* Same-page reconnect works without storage. */ }
+  for (const storage of ["sessionStorage", "localStorage"] as const) {
+    try {
+      globalThis[storage].setItem(KEY, token);
+    } catch {
+      // Each storage is optional; same-page recovery also works from memory.
+    }
+  }
 }
