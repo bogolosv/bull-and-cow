@@ -9,6 +9,7 @@ import {
   GameLayout,
   HelpPopover,
 } from "@bull-and-cow/ui";
+import { Pwa } from "./pwa/pwa";
 import { RecoveryStatus } from "./recovery-status";
 import { useGame } from "./game-provider";
 
@@ -54,6 +55,7 @@ export function GameShell({
     >
       {children}
       <RecoveryStatus />
+      <Pwa hidden={room} />
       {error && <Alert>{m.errors[error]}</Alert>}
     </GameLayout>
   );

@@ -4,7 +4,10 @@
   place-items: center;
   position: relative;
   overflow: hidden;
-  padding: var(--space-40) var(--space-24);
+  padding: max(var(--space-40), env(safe-area-inset-top))
+    max(var(--space-24), env(safe-area-inset-right))
+    max(var(--space-40), env(safe-area-inset-bottom))
+    max(var(--space-24), env(safe-area-inset-left));
   isolation: isolate;
 }
 .gameContent {
@@ -69,7 +72,10 @@
 }
 @media (max-width: 520px) {
   .gameShell {
-    padding: var(--space-20) var(--space-20) var(--space-28);
+    padding: max(var(--space-20), env(safe-area-inset-top))
+      max(var(--space-20), env(safe-area-inset-right))
+      max(var(--space-28), env(safe-area-inset-bottom))
+      max(var(--space-20), env(safe-area-inset-left));
   }
   .spark {
     display: none;
@@ -77,6 +83,7 @@
 }
 @media (max-width: 360px) {
   .gameShell {
-    padding-inline: var(--space-12);
+    padding-left: max(var(--space-12), env(safe-area-inset-left));
+    padding-right: max(var(--space-12), env(safe-area-inset-right));
   }
 }

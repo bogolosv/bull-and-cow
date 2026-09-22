@@ -1,0 +1,57 @@
+:root {
+  color-scheme: light;
+  --canvas: #faf8fd;
+  --ink: #66567a;
+  --accent: #ab87d6;
+  --edge: #8160bb;
+  --space: 1.5rem;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: ui-rounded, system-ui, sans-serif;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: max(var(--space), env(safe-area-inset-top))
+    max(var(--space), env(safe-area-inset-right))
+    max(var(--space), env(safe-area-inset-bottom))
+    max(var(--space), env(safe-area-inset-left));
+  text-align: center;
+}
+main {
+  max-width: 26rem;
+}
+img {
+  border-radius: 1.5rem;
+}
+h1 {
+  font-size: 1.75rem;
+}
+p {
+  line-height: 1.6;
+}
+button {
+  font: inherit;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0.3rem 0 var(--edge);
+  cursor: pointer;
+  margin: var(--space) 0;
+}
+button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 5px;
+}
+#hint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}

@@ -1,6 +1,13 @@
 import type { Messages } from "./uk";
 export const en = {
   app: {
+    install: "Install game",
+    installIos:
+      "In Safari, open Share → Add to Home Screen and enable Open as Web App.",
+    installBrowser:
+      "Open your browser menu and choose install app or add to home screen, if available.",
+    installFailed: "Could not open installation. Try the browser menu.",
+
     turnTime: "Time to move",
     paused: "Timer paused",
     reconnect: "Reconnecting",

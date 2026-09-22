@@ -1,0 +1,18 @@
+.install {
+  margin-top: var(--space-16);
+  text-align: center;
+  color: var(--color-muted);
+  font-size: var(--font-size-12);
+}
+.help summary {
+  cursor: pointer;
+  padding: var(--space-12);
+}
+.help p {
+  max-width: var(--size-game-content);
+  line-height: var(--line-height-body);
+}
+.help summary:focus-visible {
+  outline: var(--space-2) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+}
