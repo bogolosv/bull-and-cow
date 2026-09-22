@@ -4,6 +4,8 @@ import { formatCount } from "@bull-and-cow/i18n";
 import { useEffect, useRef, useState } from "react";
 import {
   Button,
+  GameTimer,
+  RematchControl,
   GuessRow,
   MatchResult,
   Panel,
@@ -15,6 +17,7 @@ import {
 import type { GameState } from "@bull-and-cow/shared";
 import { secretCodeSchema } from "@bull-and-cow/shared";
 import { useGame } from "../game-provider";
+import { useRemainingSeconds } from "../../hooks/use-remaining-seconds";
 import styles from "./game-board.module.css";
 
 export function GameBoard({
@@ -25,7 +28,13 @@ export function GameBoard({
   playerId: string;
 }) {
   const { messages: m, locale } = useI18n();
-  const { send, pending, status, ownSecret } = useGame();
+  const { send, pending, status, ownSecret, rooms, clockOffset } = useGame();
+  const room = rooms.find((r) => r.id === game.roomId);
+  const seconds = useRemainingSeconds(game.turnEndsAt, clockOffset);
+  const paused =
+    status !== "online" ||
+    game.turnEndsAt === null ||
+    !room?.players.every((p) => p.connected);
   const [guess, setGuess] = useState("");
   const history = useRef<HTMLOListElement>(null);
   const yourTurn = game.turnPlayerId === playerId;
@@ -42,6 +51,7 @@ export function GameBoard({
   useEffect(() => {
     setGuess("");
   }, [game.attempts.length]);
+  const canGuess = canAct && !paused && seconds > 0;
   if (game.winnerId && game.reason)
     return (
       <Panel variant="room">
@@ -52,7 +62,32 @@ export function GameBoard({
           attempts={game.attempts.length}
           attemptsText={formatCount(locale, game.attempts.length, "attempt")}
           disabled={!canAct}
-          onExit={() => send({ type: "room.leave" })}
+          actions={
+            <RematchControl
+              labels={m.ui.RematchControl}
+              score={`${room?.score[playerId] || 0} : ${Object.entries(
+                room?.score || {},
+              )
+                .filter(([id]) => id !== playerId)
+                .reduce((sum, [, wins]) => sum + wins, 0)}`}
+              accepted={!!room?.rematchPlayerIds.includes(playerId)}
+              opponentAccepted={
+                !!room?.rematchPlayerIds.some((id) => id !== playerId)
+              }
+              available={
+                room?.players.length === 2 &&
+                room.players.every((p) => p.connected)
+              }
+              disabled={!canAct}
+              onConfirm={() =>
+                send({
+                  type: "game.rematch",
+                  payload: { matchId: game.matchId },
+                })
+              }
+              onExit={() => send({ type: "room.leave" })}
+            />
+          }
         />
       </Panel>
     );
@@ -63,6 +98,11 @@ export function GameBoard({
           labels={m.ui.TurnIndicator}
           yourTurn={yourTurn}
           opponentName={game.opponentName}
+        />
+        <GameTimer
+          seconds={paused ? Math.ceil(game.turnRemainingMs / 1000) : seconds}
+          paused={paused}
+          label={paused ? m.app.paused : m.app.turnTime}
         />
         <div className={styles.historyHeading}>
           <h2>{m.app.attempts}</h2>
@@ -101,13 +141,17 @@ export function GameBoard({
             event.preventDefault();
             if (
               yourTurn &&
-              canAct &&
+              canGuess &&
               !duplicate &&
               secretCodeSchema.safeParse(guess).success
             )
               send({
                 type: "game.guess",
-                payload: { code: guess, revision: game.revision },
+                payload: {
+                  code: guess,
+                  revision: game.revision,
+                  matchId: game.matchId,
+                },
               });
           }}
         >
@@ -116,7 +160,7 @@ export function GameBoard({
             label={m.app.guess}
             value={guess}
             onChange={setGuess}
-            disabled={!yourTurn || !canAct}
+            disabled={!yourTurn || !canGuess}
           />
           {duplicate && (
             <p className={styles.error} role="alert">
@@ -127,7 +171,7 @@ export function GameBoard({
             type="submit"
             disabled={
               !yourTurn ||
-              !canAct ||
+              !canGuess ||
               duplicate ||
               !secretCodeSchema.safeParse(guess).success
             }
@@ -149,7 +193,9 @@ export function GameBoard({
       <SurrenderControl
         labels={m.ui.SurrenderControl}
         disabled={!canAct}
-        onConfirm={() => send({ type: "game.surrender" })}
+        onConfirm={() =>
+          send({ type: "game.surrender", payload: { matchId: game.matchId } })
+        }
       />
     </>
   );

@@ -31,3 +31,5 @@ export * from "./components/match-result";
 export * from "./components/surrender-control";
 
 export * from "./components/language-select";
+export * from "./components/game-timer";
+export * from "./components/rematch-control";

@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 export const errorCodeSchema = z.enum([
+  "SESSION_REQUIRED",
+  "MATCH_CHANGED",
+  "GAME_PAUSED",
+  "REMATCH_UNAVAILABLE",
   "ALREADY_IN_ROOM",
   "ROOM_UNAVAILABLE",
   "GAME_IN_PROGRESS",
@@ -27,19 +31,31 @@ export const roomSchema = z.object({
   name: z.string(),
   phase: z.enum(["waiting", "choosing", "countdown", "playing", "finished"]),
   startsAt: z.number().nullable(),
+  score: z.record(z.string(), z.number().int().nonnegative()),
+  rematchPlayerIds: z.array(z.string()),
   players: z
     .array(
-      z.object({ id: z.string(), name: playerNameSchema, ready: z.boolean() }),
+      z.object({
+        id: z.string(),
+        name: playerNameSchema,
+        ready: z.boolean(),
+        connected: z.boolean(),
+        reconnectUntil: z.number().nullable(),
+      }),
     )
     .max(2),
 });
 
 export const gameStateSchema = z.object({
   roomId: z.string(),
+  matchId: z.string(),
+  turnEndsAt: z.number().nullable(),
+  turnRemainingMs: z.number().nonnegative(),
+  serverTime: z.number(),
   revision: z.number().int().nonnegative(),
   turnPlayerId: z.string().nullable(),
   winnerId: z.string().nullable(),
-  reason: z.enum(["solved", "surrender", "disconnect"]).nullable(),
+  reason: z.enum(["solved", "surrender", "disconnect", "timeout"]).nullable(),
   opponentName: z.string(),
   opponentAttempts: z.number().int().nonnegative(),
   attempts: z.array(
@@ -54,6 +70,14 @@ export const gameStateSchema = z.object({
 export type GameState = z.infer<typeof gameStateSchema>;
 
 export const clientMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("session.resume"),
+    payload: z.object({ token: z.string().uuid().nullable() }),
+  }),
+  z.object({
+    type: z.literal("game.rematch"),
+    payload: z.object({ matchId: z.string() }),
+  }),
   z.object({ type: z.literal("rooms.list") }),
   z.object({
     type: z.literal("room.create"),
@@ -68,10 +92,14 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("game.guess"),
     payload: z.object({
       code: secretCodeSchema,
+      matchId: z.string(),
       revision: z.number().int().nonnegative(),
     }),
   }),
-  z.object({ type: z.literal("game.surrender") }),
+  z.object({
+    type: z.literal("game.surrender"),
+    payload: z.object({ matchId: z.string() }),
+  }),
   z.object({
     type: z.literal("secret.submit"),
     payload: z.object({ code: secretCodeSchema }),
@@ -79,6 +107,15 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
 ]);
 
 export const serverMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("session.ready"),
+    payload: z.object({
+      token: z.string(),
+      playerId: z.string(),
+      roomId: z.string().nullable(),
+    }),
+  }),
+  z.object({ type: z.literal("rematch.accepted") }),
   z.object({ type: z.literal("game.state"), payload: gameStateSchema }),
   z.object({
     type: z.literal("rooms.list"),

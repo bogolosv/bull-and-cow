@@ -9,6 +9,7 @@ import {
   GameLayout,
   HelpPopover,
 } from "@bull-and-cow/ui";
+import { RecoveryStatus } from "./recovery-status";
 import { useGame } from "./game-provider";
 
 export function GameShell({
@@ -52,6 +53,7 @@ export function GameShell({
       }
     >
       {children}
+      <RecoveryStatus />
       {error && <Alert>{m.errors[error]}</Alert>}
     </GameLayout>
   );

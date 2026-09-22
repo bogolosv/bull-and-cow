@@ -1,6 +1,11 @@
 import type { Messages } from "./uk";
 export const en = {
   app: {
+    turnTime: "Time to move",
+    paused: "Timer paused",
+    reconnect: "Reconnecting",
+    waitingReconnect: "Waiting to reconnect",
+
     lobby: "Game lobby",
     name: "Your name",
     namePlaceholder: "What’s your name?",
@@ -29,7 +34,7 @@ export const en = {
     roomHelpTitle: "How it works",
     lobbyHelpTitle: "It’s simple",
     roomHelp:
-      "Choose 4 different digits. Zero may come first. Once locked in, your number cannot change. The countdown starts when both players are ready. Leaving before the start resets both numbers. During play you can only surrender, giving your opponent the win. Closing the tab or disconnecting also counts as a loss. Take turns; 4 bulls wins.",
+      "Choose 4 different digits. Zero may come first. Once locked in, your number cannot change. The countdown starts when both players are ready. Leaving before the start resets both numbers. During play you can only surrender, giving your opponent the win. Each turn lasts 30 seconds. Running out of time loses the game. After disconnecting you have 30 seconds to return; the turn timer pauses. After the game, both players can agree to a rematch. Take turns; 4 bulls wins.",
     lobbyHelp:
       "Enter your name, create a room or join an opponent. Your name is saved automatically.",
     bullRule: "Bull — correct digit in the correct position.",
@@ -59,6 +64,14 @@ export const en = {
       "Bulls and Cows: create a room, find an opponent and crack their number.",
   },
   ui: {
+    RematchControl: {
+      play: "Play again",
+      waiting: "Waiting for your opponent",
+      requested: "Your opponent wants a rematch",
+      unavailable: "Your opponent must be in the room to play again",
+      exit: "Back to rooms →",
+      score: "Match score",
+    },
     GameTitle: {
       subtitle: "Your logic. Your victory.",
       bulls: "Bulls",
@@ -119,6 +132,8 @@ export const en = {
       surrender: "Surrender",
     },
     MatchResult: {
+      timeoutWin: "Your opponent ran out of time",
+      timeoutLoss: "You ran out of time",
       solvedWin: "You cracked your opponent’s number",
       solvedLoss: "Your opponent cracked your number",
       surrenderWin: "Your opponent surrendered",
@@ -141,6 +156,12 @@ export const en = {
     },
   },
   errors: {
+    SESSION_REQUIRED: "Please reconnect your session.",
+    MATCH_CHANGED: "The match has changed. Wait for an update.",
+    GAME_PAUSED: "The game is paused until your opponent returns.",
+    REMATCH_UNAVAILABLE: "A rematch is not available right now.",
+    SESSION_REPLACED: "Your game is open in another tab.",
+
     ALREADY_IN_ROOM: "Leave your current room first.",
     ROOM_UNAVAILABLE: "This room is full or no longer available.",
     GAME_IN_PROGRESS: "The game is in progress. Surrender to end it.",

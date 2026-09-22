@@ -21,6 +21,7 @@ export function createRooms(
     const room = session.roomId ? rooms.get(session.roomId) : undefined;
     if (room) {
       if (room.phase === "playing") endMatch(room, playerId, "disconnect");
+      room.rematchPlayerIds = [];
       room.players = room.players.filter((player) => player.id !== playerId);
       if (room.phase !== "finished") {
         secrets.delete(room.id);
@@ -59,6 +60,8 @@ export function createRooms(
             players: [],
             phase: "waiting",
             startsAt: null,
+            score: {},
+            rematchPlayerIds: [],
           }
         : rooms.get(message.payload.roomId);
     if (
@@ -79,7 +82,10 @@ export function createRooms(
       id: playerId,
       name: message.payload.playerName,
       ready: false,
+      connected: true,
+      reconnectUntil: null,
     });
+    room.score[playerId] = 0;
     rooms.set(room.id, room);
     updateCountdown(room);
     session.roomId = room.id;

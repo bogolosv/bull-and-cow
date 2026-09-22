@@ -42,7 +42,10 @@ test(
     const directory = mkdtempSync(join(tmpdir(), "bull-cow-game-"));
     const output = join(directory, "server.cjs");
     buildSync({
-      entryPoints: ["apps/websocket-server/src/main.ts"],
+      stdin: {
+        contents: `import { createGameServer } from './apps/websocket-server/src/server'; const server = createGameServer(0, { reconnectMs: 100 }); server.on('listening', () => console.log('ws:' + server.address().port));`,
+        resolveDir: process.cwd(),
+      },
       outfile: output,
       tsconfig: "tsconfig.base.json",
       bundle: true,
@@ -80,7 +83,15 @@ test(
         name,
         secret,
         history,
-        send: (message) => socket.send(JSON.stringify(message)),
+        send: (message) => {
+          if (["game.guess", "game.surrender"].includes(message.type))
+            message.payload = {
+              matchId: history.findLast((m) => m.type === "game.state")?.payload
+                .matchId,
+              ...message.payload,
+            };
+          socket.send(JSON.stringify(message));
+        },
         wait: async (predicate, timeout = 3000) => {
           const deadline = Date.now() + timeout;
           while (Date.now() < deadline) {

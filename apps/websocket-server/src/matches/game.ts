@@ -12,6 +12,9 @@ export function scoreGuess(secret: string, guess: string) {
 }
 
 export type Match = {
+  id: string;
+  turnEndsAt: number | null;
+  turnRemainingMs: number;
   players: Room["players"];
   turnPlayerId: string | null;
   winnerId: string | null;
@@ -20,8 +23,11 @@ export type Match = {
   attempts: (GameState["attempts"][number] & { playerId: string })[];
 };
 
-export function createMatch(players: Room["players"]): Match {
+export function createMatch(players: Room["players"], turnMs = 30_000): Match {
   return {
+    id: randomUUID(),
+    turnEndsAt: null,
+    turnRemainingMs: turnMs,
     players: players.map((player) => ({ ...player })),
     turnPlayerId: players[randomInt(players.length)].id,
     winnerId: null,
@@ -56,6 +62,8 @@ export function finishMatch(
   winnerId: string,
   reason: NonNullable<GameState["reason"]>,
 ) {
+  match.turnEndsAt = null;
+  match.turnRemainingMs = 0;
   match.winnerId = winnerId;
   match.reason = reason;
   match.turnPlayerId = null;
@@ -69,6 +77,10 @@ export function matchView(
 ): GameState {
   return {
     roomId,
+    matchId: match.id,
+    turnEndsAt: match.turnEndsAt,
+    turnRemainingMs: match.turnRemainingMs,
+    serverTime: Date.now(),
     revision: match.revision,
     turnPlayerId: match.turnPlayerId,
     winnerId: match.winnerId,

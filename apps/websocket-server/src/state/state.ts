@@ -1,7 +1,12 @@
 import type { Room } from "@bull-and-cow/shared";
 import type { Match } from "../matches/game";
 
-export type PlayerSession = { playerId: string; roomId: string | null };
+export type PlayerSession = {
+  playerId: string;
+  roomId: string | null;
+  token: string;
+  reconnectUntil: number | null;
+};
 
 // One independent in-memory store per server instance. Secrets are never public.
 export function createState() {

@@ -1,12 +1,13 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Button } from "../button";
 import styles from "./match-result.module.css";
 export type MatchResultProps = {
   labels: MatchResultLabels;
   won: boolean;
-  reason: "solved" | "surrender" | "disconnect";
+  reason: "solved" | "surrender" | "disconnect" | "timeout";
   attempts: number;
   attemptsText?: string;
+  actions?: ReactNode;
   onExit?: () => void;
   disabled?: boolean;
 };
@@ -16,6 +17,7 @@ export function MatchResult({
   reason,
   attempts,
   attemptsText,
+  actions,
   onExit,
   disabled,
 }: MatchResultProps) {
@@ -28,9 +30,13 @@ export function MatchResult({
         ? won
           ? labels.surrenderWin
           : labels.surrenderLoss
-        : won
-          ? labels.disconnectWin
-          : labels.disconnectLoss;
+        : reason === "timeout"
+          ? won
+            ? labels.timeoutWin
+            : labels.timeoutLoss
+          : won
+            ? labels.disconnectWin
+            : labels.disconnectLoss;
   return (
     <section className={styles.result} aria-label={labels.label}>
       {won && (
@@ -65,9 +71,11 @@ export function MatchResult({
           </>
         )}
       </p>
-      <Button onClick={onExit} disabled={disabled}>
-        {labels.exit}
-      </Button>
+      {actions ?? (
+        <Button onClick={onExit} disabled={disabled}>
+          {labels.exit}
+        </Button>
+      )}
     </section>
   );
 }
@@ -77,6 +85,8 @@ export type MatchResultLabels = {
   solvedLoss: string;
   surrenderWin: string;
   surrenderLoss: string;
+  timeoutWin: string;
+  timeoutLoss: string;
   disconnectWin: string;
   disconnectLoss: string;
   label: string;

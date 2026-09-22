@@ -146,7 +146,7 @@ export default function RoomPage() {
           {room.phase === "finished" ? m.app.finished : m.app.solve}
         </RoomHeading>
         {game && playerId ? (
-          <GameBoard game={game} playerId={playerId} />
+          <GameBoard key={game.matchId} game={game} playerId={playerId} />
         ) : (
           <StatusArea message={m.app.loadingBoard}>
             <WaitingDots />
@@ -192,7 +192,7 @@ export default function RoomPage() {
             ) : (
               <SecretSetup
                 key={id}
-                pending={pending}
+                pending={pending || status !== "online"}
                 onConfirm={(code) =>
                   send({ type: "secret.submit", payload: { code } })
                 }

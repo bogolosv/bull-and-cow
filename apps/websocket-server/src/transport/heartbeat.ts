@@ -9,6 +9,6 @@ export function attachHeartbeat(socket: WebSocket) {
     if (!alive) return socket.terminate();
     alive = false;
     socket.ping();
-  }, 30_000);
+  }, 5_000);
   socket.once("close", () => clearInterval(timer));
 }

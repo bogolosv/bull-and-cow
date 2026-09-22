@@ -16,6 +16,7 @@ import type {
   ErrorCode,
 } from "@bull-and-cow/shared";
 import { createWebSocket } from "../lib/websocket";
+import { getSessionToken, saveSessionToken } from "../lib/session-token";
 import { getPlayerName, savePlayerName } from "../lib/player-name";
 
 type GameContextValue = {
@@ -31,6 +32,7 @@ type GameContextValue = {
   pending: boolean;
   error:
     | ErrorCode
+    | "SESSION_REPLACED"
     | "SERVER_UNAVAILABLE"
     | "RECONNECTING"
     | "OFFLINE"
@@ -79,26 +81,45 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const offOpen = ws.onOpen(() => {
-      setStatus("online");
-      setError("");
-      ws.send({ type: "rooms.list" });
+      ws.send({
+        type: "session.resume",
+        payload: { token: getSessionToken() },
+      });
     });
-    const offClose = ws.onClose(() => {
-      setStatus("connecting");
-      setLoaded(false);
-      setRooms([]);
-      setGame(null);
-      setOwnSecret(null);
-      identity.current = null;
-      setRoomId(null);
-      setPlayerId(null);
+    const offClose = ws.onClose((code) => {
+      setStatus(code === 4000 ? "offline" : "connecting");
       finish();
-      setError("RECONNECTING");
+      setError(code === 4000 ? "SESSION_REPLACED" : "RECONNECTING");
     });
     const offMessage = ws.onMessage((message) => {
+      if (message.type === "session.ready") {
+        saveSessionToken(message.payload.token);
+        setStatus("online");
+        setError("");
+        finish();
+        const { roomId, playerId } = message.payload;
+        identity.current = roomId ? { roomId, playerId } : null;
+        setRoomId(roomId);
+        setPlayerId(playerId);
+        if (!roomId) {
+          setGame(null);
+          setOwnSecret(null);
+        } else if (window.location.pathname !== `/room/${roomId}`)
+          router.replace(`/room/${roomId}`);
+      }
+      if (message.type === "rematch.accepted") finish();
       if (message.type === "rooms.list") {
         setRooms(message.payload.rooms);
         const current = identity.current;
+        const currentRoom = message.payload.rooms.find(
+          (room) => room.id === current?.roomId,
+        );
+        if (
+          currentRoom &&
+          currentRoom.phase !== "playing" &&
+          currentRoom.phase !== "finished"
+        )
+          setGame(null);
         if (
           current &&
           !message.payload.rooms
@@ -141,6 +162,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         message.payload.roomId === identity.current?.roomId
       ) {
         setGame(message.payload);
+        setClockOffset(message.payload.serverTime - Date.now());
         if (message.payload.winnerId) setOwnSecret(null);
         finish();
       }
@@ -189,16 +211,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     previousPath.current = pathname;
   }, [pathname, roomId, activeRoom?.phase, router, send]);
-
-  useEffect(() => {
-    if (activeRoom?.phase !== "playing") return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [activeRoom?.phase]);
 
   return (
     <GameContext.Provider

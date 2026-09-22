@@ -21,7 +21,7 @@ export const createWebSocket = () => {
 
   const messageListeners = new Set<(message: ServerMessage) => void>();
   const openListeners = new Set<() => void>();
-  const closeListeners = new Set<() => void>();
+  const closeListeners = new Set<(code: number) => void>();
 
   const connect = () => {
     socket = new WebSocket(url);
@@ -55,8 +55,9 @@ export const createWebSocket = () => {
       });
     };
 
-    socket.onclose = () => {
-      closeListeners.forEach((listener) => listener());
+    socket.onclose = (event) => {
+      if (event.code === 4000) manuallyClosed = true;
+      closeListeners.forEach((listener) => listener(event.code));
 
       if (manuallyClosed) {
         return;
@@ -100,7 +101,7 @@ export const createWebSocket = () => {
     };
   };
 
-  const onClose = (listener: () => void) => {
+  const onClose = (listener: (code: number) => void) => {
     closeListeners.add(listener);
     return () => {
       closeListeners.delete(listener);

@@ -42,7 +42,7 @@ test('name remains stable in memory when browser storage is blocked', () => {
 test('rooms broadcast, enforce capacity, validate names and clean up on disconnect', { timeout: 15000 }, async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'bull-cow-test-'));
   const output = join(directory, 'server.cjs');
-  buildSync({ entryPoints: ['apps/websocket-server/src/main.ts'], outfile: output, tsconfig: 'tsconfig.base.json', bundle: true, platform: 'node', format: 'cjs' });
+  buildSync({ stdin: { contents: `import { createGameServer } from './apps/websocket-server/src/server'; const server = createGameServer(0, { reconnectMs: 100 }); server.on('listening', () => console.log('ws:' + server.address().port));`, resolveDir: process.cwd() }, outfile: output, tsconfig: 'tsconfig.base.json', bundle: true, platform: 'node', format: 'cjs' });
   const server = spawn(process.execPath, [output], { env: { ...process.env, PORT: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
   let serverError = '';
   server.stderr.on('data', (data) => { serverError += data.toString(); });
@@ -68,7 +68,10 @@ test('rooms broadcast, enforce capacity, validate names and clean up on disconne
     const client = {
       socket,
       history,
-      send: (message) => socket.send(JSON.stringify(message)),
+      send: (message) => {
+        if (message.type === 'game.surrender') message.payload = { matchId: history.findLast(m => m.type === 'game.state')?.payload.matchId };
+        socket.send(JSON.stringify(message));
+      },
       wait: async (predicate, timeout = 3000) => {
         const deadline = Date.now() + timeout;
         while (Date.now() < deadline) {
@@ -143,7 +146,7 @@ test('rooms broadcast, enforce capacity, validate names and clean up on disconne
   assert.ok(!JSON.stringify(a.history).includes('"5678"'), 'we must never receive opponent code');
   assert.ok(!JSON.stringify(c.history).includes('"0482"') && !JSON.stringify(c.history).includes('"5678"'), 'lobby observers must not receive codes');
   for (const message of c.history.filter(message => message.type === 'rooms.list')) {
-    for (const room of message.payload.rooms) for (const player of room.players) assert.deepEqual(Object.keys(player).sort(), ['id', 'name', 'ready']);
+    for (const room of message.payload.rooms) for (const player of room.players) assert.deepEqual(Object.keys(player).sort(), ['connected', 'id', 'name', 'ready', 'reconnectUntil']);
   }
   a.send({ type: 'room.leave' });
   await a.wait(message => message.type === 'error');
