@@ -71,6 +71,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setPending(false);
       if (requestTimer.current) clearTimeout(requestTimer.current);
     };
+    let sessionEstablished = false;
     let ws: ReturnType<typeof createWebSocket>;
     try {
       ws = createWebSocket();
@@ -89,10 +90,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const offClose = ws.onClose((code) => {
       setStatus(code === 4000 ? "offline" : "connecting");
       finish();
-      setError(code === 4000 ? "SESSION_REPLACED" : "RECONNECTING");
+      setError(
+        code === 4000
+          ? "SESSION_REPLACED"
+          : sessionEstablished
+            ? "RECONNECTING"
+            : "SERVER_UNAVAILABLE",
+      );
     });
     const offMessage = ws.onMessage((message) => {
       if (message.type === "session.ready") {
+        sessionEstablished = true;
         saveSessionToken(message.payload.token);
         setStatus("online");
         setError("");

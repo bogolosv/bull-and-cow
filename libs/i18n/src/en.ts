@@ -156,7 +156,7 @@ export const en = {
     },
   },
   errors: {
-    SESSION_REQUIRED: "Please reconnect your session.",
+    SESSION_REQUIRED: "Could not restore your session. Refresh the page.",
     MATCH_CHANGED: "The match has changed. Wait for an update.",
     GAME_PAUSED: "The game is paused until your opponent returns.",
     REMATCH_UNAVAILABLE: "A rematch is not available right now.",
@@ -171,12 +171,15 @@ export const en = {
     CANNOT_SURRENDER: "You can only surrender during a game.",
     INVALID_JSON: "Could not read the message.",
     INVALID_CODE: "Enter 4 different digits. Zero may come first.",
-    INVALID_MESSAGE: "Check your input. Names must contain 1–32 characters.",
+    INVALID_NAME: "Your name must contain 1–32 characters.",
+    INVALID_MESSAGE:
+      "Could not process the request. Refresh the page and try again.",
     NOT_IN_ROOM: "Join a room first.",
     SECRET_ALREADY_SET: "Your number is locked in and cannot be changed.",
     WAIT_FOR_OPPONENT: "Wait for an opponent.",
-    SERVER_UNAVAILABLE: "Server unavailable. Try again later.",
-    RECONNECTING: "Reconnecting…",
+    SERVER_UNAVAILABLE:
+      "Could not connect to the game server. Check your internet connection or try again later.",
+    RECONNECTING: "Connection to the server lost. Trying to reconnect…",
     OFFLINE: "Not connected to the server. Please wait.",
     TIMEOUT: "The server did not respond. Try again.",
   },

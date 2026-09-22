@@ -15,6 +15,7 @@ export const errorCodeSchema = z.enum([
   "INVALID_JSON",
   "INVALID_CODE",
   "INVALID_MESSAGE",
+  "INVALID_NAME",
   "NOT_IN_ROOM",
   "SECRET_ALREADY_SET",
   "WAIT_FOR_OPPONENT",

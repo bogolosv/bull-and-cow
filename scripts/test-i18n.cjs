@@ -91,3 +91,45 @@ test("protocol returns stable error codes without localized sentences", () => {
   assert.equal(messages[1].payload.code, "INVALID_CODE");
   assert.deepEqual(Object.keys(messages[1].payload), ["code"]);
 });
+
+test("validation errors describe the failing field, not every request as a name error", () => {
+  const { parseMessage } = load(
+    "apps/websocket-server/src/transport/protocol.ts",
+  );
+  for (const [request, expected] of [
+    [{ type: "room.create", payload: { playerName: " " } }, "INVALID_NAME"],
+    [
+      {
+        type: "room.join",
+        payload: { playerName: "x".repeat(33), roomId: "room" },
+      },
+      "INVALID_NAME",
+    ],
+    [
+      { type: "room.join", payload: { playerName: "Alice" } },
+      "INVALID_MESSAGE",
+    ],
+    [
+      {
+        type: "game.guess",
+        payload: { code: "1123", matchId: "match", revision: 0 },
+      },
+      "INVALID_CODE",
+    ],
+    [
+      { type: "game.guess", payload: { code: "1234", matchId: "match" } },
+      "INVALID_MESSAGE",
+    ],
+    [
+      { type: "session.resume", payload: { token: "broken" } },
+      "SESSION_REQUIRED",
+    ],
+    [{ type: "unknown" }, "INVALID_MESSAGE"],
+  ]) {
+    let error;
+    parseMessage(JSON.stringify(request), (message) => {
+      error = message.payload.code;
+    });
+    assert.equal(error, expected, JSON.stringify(request));
+  }
+});
