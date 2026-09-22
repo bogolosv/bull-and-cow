@@ -1,96 +1,67 @@
-# BullAndCow
+# Bull & Cow
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Гра «Бики та корови» для двох: кімнати, загадування числа, почергові спроби й результат через WebSocket.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Структура
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- `apps/web` — Next.js / React, сторінка кімнат.
+- `apps/websocket-server` — Node.js / ws, кімнати на двох гравців. [Структура серверних модулів](apps/websocket-server/README.md).
+- `libs/shared` — Zod-схеми та спільні типи протоколу.
 
-## Run tasks
+## Локальний запуск
 
-To run tasks with Nx use:
+Встановіть залежності через `pnpm install` (pnpm 12.5.1).
 
-```sh
-npx nx <target> <project-name>
+У `apps/web/.env.local` задайте адресу WebSocket-сервера:
+
+```dotenv
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
 ```
 
-For example:
+Запустіть у двох терміналах:
 
 ```sh
-npx nx build myproject
+npx nx serve websocket-server
+npx nx dev web
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+Відкрийте вебзастосунок за адресою, яку виведе Next.js. Для перевірки з іншим гравцем відкрийте його в другому браузері або вкладці.
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Поведінка лобі
 
-## Add new projects
+- Початкове ім’я генерує `unique-names-generator`. Воно зберігається в `localStorage` і повторно використовується після оновлення сторінки. Змінене вручну ім’я також зберігається. Якщо сховище недоступне, ім’я залишається стабільним протягом поточного завантаження сторінки.
+- Ім’я має містити від 1 до 32 символів після видалення пробілів на краях.
+- Одне WebSocket-з’єднання може перебувати лише в одній кімнаті. У кімнаті максимум двоє гравців.
+- Кімнати зберігаються в пам’яті одного процесу сервера. Порожні кімнати видаляються, перезапуск сервера очищає список.
+- Вихід або втрата з’єднання прибирає гравця з кімнати; після перепідключення потрібно приєднатися знову. Сервер перевіряє з’єднання кожні 30 секунд.
+- Після створення або приєднання відкривається `/room/[id]`. WebSocket-з’єднання зберігається між сторінками. Посилання на кімнату можна скопіювати для запрошення друга.
+- Коли приєднується другий гравець, обидва загадують секретний код із 4 різних цифр (нуль може бути першим). Сервер перевіряє код і дозволяє підтвердити його лише раз. Лише після готовності обох починається спільний відлік на 5 секунд. До початку гри вихід будь-кого скасовує відлік і скидає обидва секрети. Вихід через кнопку або повернення браузером до лобі звільняє місце.
+- Підтверджений код приховано; власний код можна відкрити на 3 секунди. Секрети не потрапляють у публічні знімки кімнат і не надсилаються супернику. Вони живуть лише в пам’яті сервера й власного клієнта. Після відліку починається гра.
+- Сервер випадково обирає першого гравця. Ходи чергуються; бик означає правильну цифру на правильній позиції, корова — на іншій. Чотири бики завершують гру перемогою. Повторні числа, чужий хід і застарілі запити відхиляються.
+- Кожен бачить свою історію спроб та кількість спроб суперника. Чужі спроби й секрети не надсилаються.
+- Під час гри вихід заблоковано на сервері; браузерний «Назад» повертає на поле. Замість виходу є «Здатися» з підтвердженням: суперник перемагає. Закриття вкладки, оновлення сторінки або розрив з’єднання також зараховує поразку після виявлення сервером. Відновлення матчу після перепідключення поки немає.
+- Після результату можна повернутися в лобі й створити нову кімнату. Секрети видаляються після завершення; матч — коли кімната порожня.
+- Введення цифр, поява спроби, оцінка, зміна ходу та перемога мають короткі анімації. Системна опція зменшення руху їх вимикає.
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
-
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
-
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
-
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
-
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
+## Перевірки
 
 ```sh
-npx nx connect
+npm run test:lobby
+npm run test:game
+npx tsc -p apps/web/tsconfig.json --noEmit --incremental false
+npx nx run-many -t lint
+npx nx build websocket-server
+npx nx build web
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+`test:lobby` перевіряє збереження імені, недоступність сховища, створення та синхронізацію кімнат, ліміт учасників, валідацію, очищення після відключення, синхронізацію відліку, його скасування та завершення, валідацію секретів, заборону заміни та відсутність витоку коду супернику й спостерігачам. Інтеграційний тест запускає тимчасовий сервер на вільному локальному порту.
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## UI kit та Storybook
 
-### Step 2
+Спільні компоненти й дизайн-токени зберігаються в `libs/ui`. Запуск: `npm run storybook`, збірка: `npm run build-storybook`, перевірка типів: `npm run typecheck:ui`, перевірка ізоляції: `npm run test:ui-isolation`. Деталі та правила розширення — у [документації UI kit](libs/ui/README.md).
 
-Use the following command to configure a CI workflow for your workspace:
+`test:game` перевіряє підрахунок биків/корів, черговість, приватність історії, повторні та застарілі запити, перемогу, заборону виходу, здачу й розрив з’єднання.
 
-```sh
-npx nx g ci-workflow
-```
+## Мови
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Українська й англійська доступні через перемикач над ігровим екраном. Вибір зберігається в cookie; до першого ручного вибору використовується мова браузера, резервна — українська. Можна перемикати мову під час гри без втрати введеної спроби та з’єднання. Один URL кімнати працює для різних мов. [Архітектура локалізації](libs/i18n/README.md), перевірка: `npm run test:i18n`.
