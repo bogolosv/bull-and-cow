@@ -18,6 +18,12 @@ export const createWebSocket = () => {
   let reconnectDelay = INITIAL_RECONNECT_DELAY;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let manuallyClosed = false;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  let lastPong = 0;
+  const stopHeartbeat = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    heartbeat = null;
+  };
 
   const messageListeners = new Set<(message: ServerMessage) => void>();
   const openListeners = new Set<() => void>();
@@ -28,11 +34,24 @@ export const createWebSocket = () => {
 
     socket.onopen = () => {
       reconnectDelay = INITIAL_RECONNECT_DELAY;
+      stopHeartbeat();
+      lastPong = Date.now();
+      heartbeat = setInterval(() => {
+        if (Date.now() - lastPong > 15_000) {
+          socket?.close(4001, "Heartbeat timeout");
+          return;
+        }
+        if (socket?.readyState === WebSocket.OPEN) socket.send("bull-cow:ping");
+      }, 5_000);
 
       openListeners.forEach((listener) => listener());
     };
 
     socket.onmessage = (event) => {
+      if (event.data === "bull-cow:pong") {
+        lastPong = Date.now();
+        return;
+      }
       let parsedData: unknown;
 
       try {
@@ -56,6 +75,7 @@ export const createWebSocket = () => {
     };
 
     socket.onclose = (event) => {
+      stopHeartbeat();
       if (event.code === 4000) manuallyClosed = true;
       closeListeners.forEach((listener) => listener(event.code));
 
@@ -110,6 +130,7 @@ export const createWebSocket = () => {
 
   const close = () => {
     manuallyClosed = true;
+    stopHeartbeat();
 
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);

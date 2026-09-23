@@ -1,3 +1,4 @@
+import { systemTimers, type Timers } from "../time/timers";
 import type { ServerState, PlayerSession } from "../state/state";
 import type { Publisher } from "../transport/publisher";
 import type { ClientMessage, Room, GameState } from "@bull-and-cow/shared";
@@ -7,13 +8,14 @@ export function createMatches(
   state: ServerState,
   publisher: Publisher,
   turnMs = 30_000,
+  clock: Timers = systemTimers,
 ) {
   const { rooms, matches, secrets } = state;
   const { send, publishRooms, publishMatch } = publisher;
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
   function clear(roomId: string) {
     const timer = timers.get(roomId);
-    if (timer) clearTimeout(timer);
+    if (timer) clock.cancel(timer);
     timers.delete(roomId);
   }
   function complete(room: Room) {
@@ -61,17 +63,26 @@ export function createMatches(
     )
       return;
     match.turnEndsAt = Date.now() + match.turnRemainingMs;
+    schedule(room);
+  }
+  function schedule(room: Room) {
+    const match = matches.get(room.id);
+    if (!match || match.turnEndsAt === null || room.phase !== "playing") return;
+    clear(room.id);
     const deadline = match.turnEndsAt;
     timers.set(
       room.id,
-      setTimeout(() => {
-        if (matches.get(room.id) !== match || match.turnEndsAt !== deadline)
-          return;
-        if (!expireDue(room)) {
-          match.turnRemainingMs = Math.max(0, deadline - Date.now());
-          arm(room);
-        }
-      }, match.turnRemainingMs),
+      clock.schedule(
+        () => {
+          if (matches.get(room.id) !== match || match.turnEndsAt !== deadline)
+            return;
+          if (!expireDue(room)) {
+            match.turnRemainingMs = Math.max(0, deadline - Date.now());
+            arm(room);
+          }
+        },
+        Math.max(0, deadline - Date.now()),
+      ),
     );
   }
   function start(room: Room) {
@@ -175,6 +186,9 @@ export function createMatches(
     for (const id of timers.keys()) clear(id);
   }
   return {
+    restore: () => {
+      for (const room of rooms.values()) schedule(room);
+    },
     start,
     endMatch,
     guess,

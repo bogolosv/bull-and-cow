@@ -11,10 +11,16 @@
     "build-storybook": "storybook build -c libs/ui/.storybook -o dist/storybook/ui --disable-telemetry",
     "typecheck:ui": "tsc -p libs/ui/tsconfig.json",
     "test:ui-isolation": "node --test scripts/test-ui-isolation.cjs",
-    "test:i18n": "node --test scripts/test-i18n.cjs"
+    "test:i18n": "node --test scripts/test-i18n.cjs",
+    "dev:cloudflare": "cd apps/cloudflare-server && wrangler dev --env=\"\" --port 8787",
+    "build:cloudflare": "cd apps/cloudflare-server && wrangler deploy --env production --dry-run --outdir ../../dist/cloudflare",
+    "typecheck:cloudflare": "tsc -p apps/cloudflare-server/tsconfig.json",
+    "deploy:cloudflare": "cd apps/cloudflare-server && wrangler deploy --env production",
+    "test:cloudflare": "node --test scripts/test-cloudflare-engine.cjs scripts/test-cloudflare-runtime.cjs"
   },
   "private": true,
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260921.1",
     "@eslint/js": "^9.8.0",
     "@next/eslint-plugin-next": "^16.1.6",
     "@nx/esbuild": "23.2.1",
@@ -44,13 +50,15 @@
     "eslint-plugin-jsx-a11y": "6.10.1",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "5.0.0",
+    "miniflare": "4.20260721.0",
     "nx": "23.2.1",
     "prettier": "^3.9.8",
     "storybook": "^10.6.0",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.58.0",
-    "vite": "^7.3.6"
+    "vite": "^7.3.6",
+    "wrangler": "4.113.0"
   },
   "dependencies": {
     "next": "~16.1.6",

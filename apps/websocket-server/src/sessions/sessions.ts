@@ -1,3 +1,4 @@
+import { systemTimers, type Timers } from "../time/timers";
 import { randomUUID } from "node:crypto";
 import type { ServerState, PlayerSession } from "../state/state";
 import type { Publisher } from "../transport/publisher";
@@ -11,13 +12,14 @@ export function createSessions(
   countdown: Countdown,
   removePlayer: (session: PlayerSession) => void,
   reconnectMs = 30_000,
+  clock: Timers = systemTimers,
+  sessions = new Map<string, PlayerSession>(),
 ) {
   let disposed = false;
-  const sessions = new Map<string, PlayerSession>();
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
   function clear(token: string) {
     const timer = timers.get(token);
-    if (timer) clearTimeout(timer);
+    if (timer) clock.cancel(timer);
     timers.delete(token);
   }
   function expire(session: PlayerSession) {
@@ -78,9 +80,15 @@ export function createSessions(
     publisher.publishRooms();
     publisher.publishMatch(room.id);
     clear(session.token);
+    schedule(session);
+  }
+  function schedule(session: PlayerSession) {
     timers.set(
       session.token,
-      setTimeout(() => expire(session), reconnectMs),
+      clock.schedule(
+        () => expire(session),
+        Math.max(0, (session.reconnectUntil ?? Date.now()) - Date.now()),
+      ),
     );
   }
   function dispose() {
@@ -88,5 +96,14 @@ export function createSessions(
     for (const token of timers.keys()) clear(token);
     sessions.clear();
   }
-  return { claim, connected, disconnected, dispose };
+  return {
+    claim,
+    connected,
+    disconnected,
+    dispose,
+    restore: () => {
+      for (const session of sessions.values())
+        if (session.reconnectUntil !== null) schedule(session);
+    },
+  };
 }

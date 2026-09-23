@@ -50,3 +50,10 @@ out
 # Local tool caches
 .pnpm-store/
 *.tsbuildinfo
+
+# Cloud hosting state and credentials
+.wrangler/
+.vercel/
+.dev.vars*
+.env*
+!.env.example

@@ -54,6 +54,10 @@ export function createGameServer(
       payload: { rooms: [...state.rooms.values()], serverTime: Date.now() },
     });
     socket.on("message", (data) => {
+      if (data.toString() === "bull-cow:ping") {
+        socket.send("bull-cow:pong");
+        return;
+      }
       const message = parseMessage(data.toString(), reply);
       if (!message) return;
       if (message.type === "session.resume") {

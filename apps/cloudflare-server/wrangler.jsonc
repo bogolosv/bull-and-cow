@@ -1,0 +1,21 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "bull-cow-game",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "tsconfig": "tsconfig.json",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "GAME_LOBBY", "class_name": "GameLobby" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameLobby"] }],
+  "vars": { "ALLOWED_ORIGINS": "http://127.0.0.1:3100,http://localhost:3100,http://127.0.0.1:3102" },
+  "env": {
+    "production": {
+      "name": "bull-cow-game",
+      "durable_objects": { "bindings": [{ "name": "GAME_LOBBY", "class_name": "GameLobby" }] },
+      "vars": { "ALLOWED_ORIGINS": "" }
+    }
+  }
+}
