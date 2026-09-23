@@ -1,42 +1,58 @@
-# WebSocket server
+# Game services and Node.js WebSocket server
 
-`main.ts` читає порт і запускає сервер. `createGameServer(port, timing?)` у `server.ts` створює окремий стан і сервіси, підключає WebSocket-події та спрямовує перевірені повідомлення до потрібного сервісу.
+This directory contains the game services used by both server runtimes and a local Node.js / `ws` adapter. The Node.js adapter keeps state in memory; restarting it clears rooms and sessions. The [Cloudflare adapter](../cloudflare-server/README.md) adds durable storage and alarm scheduling.
 
-## Модулі
+## Run locally
 
-Файли згруповані за призначенням: `transport/` — обмін повідомленнями, `rooms/` — кімнати й підготовка, `matches/` — матчі та правила гри, `state/` — спільний стан, `sessions/` — відновлювані сесії. У корені `src/` залишаються лише запуск і збирання залежностей.
-
-- `server.ts` — з’єднання, сесії гравців, маршрутизація повідомлень, обробка відключень.
-- `transport/protocol.ts` — JSON та валідація вхідних повідомлень через спільні Zod-схеми.
-- `transport/heartbeat.ts` — ping/pong і виявлення втраченого з’єднання.
-- `state/state.ts` — стан одного екземпляра сервера: кімнати, матчі, секрети та таймери.
-- `transport/publisher.ts` — публічні знімки кімнат і персональні знімки матчів. Отримує транспорт через `send`/`broadcast`, не залежить від `ws`.
-- `rooms/rooms.ts` — створення, приєднання, вихід і очищення порожніх кімнат.
-- `sessions/sessions.ts` — приватні токени сесій, резервування місця на 30 секунд, повернення приватного стану та завершення пільгового періоду.
-- `rooms/rematch.ts` — згода обох гравців на новий матч зі збереженням рахунку серії.
-- `rooms/secrets.ts` — приймання секретного числа та готовність гравця.
-- `rooms/countdown.ts` — запуск/скасування відліку та перехід у гру.
-- `matches/matches.ts` — перевірка ходу, серверний дедлайн 30 секунд, пауза/відновлення таймера, здача й завершення матчу.
-- `matches/game.ts` — правила підрахунку биків/корів, зміни стану матчу та персональне представлення результатів.
-
-Сервіси отримують залежності явно через фабрики. Вони не створюють WebSocket-з’єднань і не використовують глобальний стан. `server.ts` є місцем їхнього збирання; `rooms/rooms.ts` викликає завершення матчу при відключенні, а кімнати й секрети використовують один сервіс відліку.
-
-Секрети зберігаються окремо від публічних кімнат. Історія спроб фільтрується для кожного гравця через `matchView`; розсилання нового стану матчу має проходити через `transport/publisher.ts`.
-
-## Перевірка
-
-Із кореня репозиторію:
+From the repository root, after installing dependencies:
 
 ```sh
-npm run test:lobby
-npm run test:game
-npm run test:lifecycle
-node_modules/.bin/tsc -p apps/websocket-server/tsconfig.app.json --noEmit
-node_modules/.bin/eslint apps/websocket-server/src
+pnpm dev:server
 ```
 
-Інтеграційні тести збирають `server.ts` та запускають справжній сервер на вільному порту, перевіряючи весь шлях від WebSocket-повідомлення до відповіді.
+The default endpoint is `ws://localhost:3001`; `PORT` overrides it. Set the frontend's `NEXT_PUBLIC_WS_URL` to this endpoint and run `pnpm dev:web` in another terminal. See the [root setup guide](../../README.md#run-locally).
 
-`timing` дає змогу скоротити `turnMs`, `reconnectMs` і `countdownMs` у тестах. У звичайному запуску це відповідно 30, 30 і 5 секунд. Дедлайн ходу належить серверу; клієнт лише показує залишок за серверним часом. Кожний матч має окремий `matchId`, тому запізнілі команди попереднього раунду відхиляються. Токен сесії передається тільки її власнику й не входить до знімка кімнати.
+## Module boundaries
 
-`time/timers.ts` визначає спільний інтерфейс планувальника. У Node.js використовуються системні таймери. Cloudflare-адаптер підставляє планувальник на Alarms; методи `restore()` відновлюють callbacks із збережених абсолютних дедлайнів, не скидаючи залишок часу. Сесії також можуть отримувати зовнішнє відновлене сховище. Деталі — у [Cloudflare README](../cloudflare-server/README.md).
+| Module | Responsibility |
+| --- | --- |
+| [main.ts](src/main.ts) | Read the port and start the server. |
+| [server.ts](src/server.ts) | Create per-server state, compose services, route messages and handle connections. |
+| `transport/protocol.ts` | Parse JSON and validate messages with shared Zod schemas. |
+| `transport/heartbeat.ts` | Detect lost connections through ping/pong. |
+| `transport/publisher.ts` | Publish public room snapshots and private match views through injected `send` / `broadcast` functions. |
+| `state/state.ts` | Define rooms, matches, secrets and timer state. |
+| `rooms/rooms.ts` | Create, join and leave rooms; remove players and clean up empty rooms. |
+| `rooms/secrets.ts` | Accept secret codes and track readiness. |
+| `rooms/countdown.ts` | Start or cancel the countdown and transition into a match. |
+| `rooms/rematch.ts` | Require both players to accept a new round while preserving the series score. |
+| `matches/game.ts` | Score guesses, update match state and construct player-specific views. |
+| `matches/matches.ts` | Enforce turns and deadlines, pause/resume timers, and resolve surrender or match completion. |
+| `sessions/sessions.ts` | Issue session tokens, restore private state and enforce the reconnect window. |
+| `time/timers.ts` | Define the scheduler interface and default system timers. |
+
+Services receive dependencies through factory functions. They do not create WebSocket connections or rely on global mutable state. `server.ts` is the Node.js composition point.
+
+## State and timing guarantees
+
+Secrets are separate from public rooms. Match history is filtered per player through `matchView`; updates should go through the publisher to preserve that boundary. Session tokens are sent only to their owner and never included in room snapshots.
+
+`createGameServer(port, timing?)` accepts test overrides for `turnMs`, `reconnectMs` and `countdownMs`. Defaults are **30, 30 and 5 seconds** respectively. The server owns the deadline; clients display the remaining time. A separate `matchId` for each round rejects delayed commands from previous rounds.
+
+Disconnect detection starts a recovery window rather than immediately removing the player. An active turn pauses during recovery. If the window expires, the opponent wins; reconnecting restores the player's private state. Explicit leaving during play is rejected, while surrender ends the match.
+
+The timer interface lets Cloudflare replace system timers with alarms. Service `restore()` methods reconstruct callbacks from saved absolute deadlines without granting additional time. Sessions can also receive restored state.
+
+## Checks
+
+Run from the repository root:
+
+```sh
+pnpm test:lobby
+pnpm test:game
+pnpm test:lifecycle
+pnpm exec tsc -p apps/websocket-server/tsconfig.app.json --noEmit
+pnpm exec nx lint websocket-server
+```
+
+Integration tests bundle the server and start it on an available local port, exercising the complete path from WebSocket messages to responses. See [architecture and trade-offs](../../docs/architecture.md) for the production storage model.

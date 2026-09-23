@@ -1,89 +1,108 @@
-# Bull & Cow
+<div align="center">
+  <img src="apps/web/public/icons/icon.svg" width="88" alt="Bull & Cow mascot" />
+  <h1>Bull & Cow</h1>
+  <p>A real-time, two-player number guessing game built with TypeScript.</p>
+  <p><a href="https://bull-and-cow.vercel.app/">Play the live demo</a> · <a href="#run-locally">Run locally</a> · <a href="docs/architecture.md">Architecture</a> · <a href="libs/ui/README.md">UI kit</a></p>
+</div>
 
-Гра «Бики та корови» для двох: кімнати, загадування числа, почергові спроби й результат через WebSocket.
+![CI](https://github.com/bogolosv/bull-and-cow/actions/workflows/ci.yml/badge.svg)
+![Cloudflare deployment](https://github.com/bogolosv/bull-and-cow/actions/workflows/deploy-cloudflare.yml/badge.svg)
 
-## Структура
+![Bull & Cow lobby](docs/images/lobby.png)
 
-- `apps/web` — Next.js / React, сторінка кімнат.
-- `apps/cloudflare-server` — Worker + SQLite Durable Object для хмарного ігрового сервера; [модулі й локальний запуск](apps/cloudflare-server/README.md).
-- `apps/websocket-server` — Node.js / ws, кімнати на двох гравців. [Структура серверних модулів](apps/websocket-server/README.md).
-- `libs/shared` — Zod-схеми та спільні типи протоколу.
+Each player chooses four distinct digits, then takes turns guessing the opponent’s code. A **bull** is a correct digit in the correct position; a **cow** is a correct digit in another position. Four bulls win the match. Leading zeroes are allowed.
 
-## Локальний запуск
+To try it, open the demo in two browsers or invite a friend using a room link. No account is required.
 
-Встановіть залежності через `pnpm install` (pnpm 12.5.1).
+## Features
 
-У `apps/web/.env.local` задайте адресу WebSocket-сервера:
+- Live rooms, private secret selection, a shared countdown and turn-based play over WebSocket.
+- Server-enforced 30-second turns, surrender, match results and mutually accepted rematches with a series score.
+- Session recovery after a dropped connection or closed tab, with a 30-second reconnect window and paused turn timer.
+- Ukrainian and English, responsive layouts, keyboard-friendly controls and reduced-motion support.
+- An installable PWA with an offline fallback; multiplayer play still requires a connection.
+- A reusable Storybook UI kit with isolated CSS Modules, semantic OKLCH design tokens and localized labels.
 
-```dotenv
-NEXT_PUBLIC_WS_URL=ws://localhost:3001
+## Engineering highlights
+
+| Concern | Implementation |
+| --- | --- |
+| Authoritative game state | The server validates turns, guesses, deadlines and match IDs. The client renders server snapshots. |
+| Shared protocol | Zod schemas validate messages at runtime and provide TypeScript types for both ends of the connection. |
+| Private player state | Room broadcasts exclude secrets and guess history. Each player receives a separate view of their match. |
+| Durable recovery | Cloudflare stores room and session state in a SQLite-backed Durable Object. Alarms restore absolute deadlines after hibernation. |
+| Portable game logic | Node.js and Cloudflare reuse game services with injected transport and timer implementations. |
+| Component boundaries | UI components receive data, callbacks and labels through props; they do not depend on Next.js or the game connection. |
+
+See [architecture and trade-offs](docs/architecture.md) for the request flow, persistence model and current limits.
+
+## Stack and structure
+
+**Next.js 16 · React 19 · TypeScript · Zod · Cloudflare Workers / Durable Objects · Node.js / ws · Storybook · Nx · pnpm**
+
+```text
+apps/
+  web/                 Next.js frontend, game state, localization and PWA
+  cloudflare-server/   Production Worker, durable storage and alarm scheduler
+  websocket-server/    Shared game services and local Node.js WebSocket server
+libs/
+  shared/              Message schemas and protocol types
+  ui/                  Components, design tokens and Storybook
+  i18n/                Typed Ukrainian and English dictionaries
+scripts/               Unit, integration and repository checks
+.github/workflows/     CI and production Worker deployment
 ```
 
-Запустіть у двох терміналах:
+## Run locally
+
+Prerequisites: **Node.js 22** and **pnpm 12.5.1** (the version pinned in `package.json`). No cloud account is required for local play.
 
 ```sh
-npx nx serve websocket-server
-npx nx dev web
+pnpm install --frozen-lockfile
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-Відкрийте вебзастосунок за адресою, яку виведе Next.js. Для перевірки з іншим гравцем відкрийте його в другому браузері або вкладці.
-
-## Поведінка лобі
-
-- Початкове ім’я генерує `unique-names-generator`. Воно зберігається в `localStorage` і повторно використовується після оновлення сторінки. Змінене вручну ім’я також зберігається. Якщо сховище недоступне, ім’я залишається стабільним протягом поточного завантаження сторінки.
-- Ім’я має містити від 1 до 32 символів після видалення пробілів на краях.
-- Одне WebSocket-з’єднання може перебувати лише в одній кімнаті. У кімнаті максимум двоє гравців.
-- У локальному Node.js-сервері кімнати зберігаються в пам’яті процесу й очищаються після перезапуску. Cloudflare-адаптер зберігає їх у SQLite Durable Object. Порожні кімнати видаляються в обох варіантах.
-- Явний вихід звільняє місце. Після виявлення розриву з’єднання сервер резервує місце на 30 секунд; вкладка автоматично відновлює сесію за приватним токеном. Він зберігається в `localStorage` для повернення після закриття вкладки та в `sessionStorage` для збереження ідентичності вже відкритої вкладки. Повторне відкриття посилання в тому самому браузері протягом 30 секунд повертає кімнату, власний секрет і історію. Якщо та сама сесія вже відкрита в іншій вкладці, нове з’єднання замінює попереднє. Heartbeat перевіряє з’єднання кожні 5 секунд.
-- Після створення або приєднання відкривається `/room/[id]`. WebSocket-з’єднання зберігається між сторінками. Посилання на кімнату можна скопіювати для запрошення друга.
-- Коли приєднується другий гравець, обидва загадують секретний код із 4 різних цифр (нуль може бути першим). Сервер перевіряє код і дозволяє підтвердити його лише раз. Лише після готовності обох починається спільний відлік на 5 секунд. До початку гри вихід будь-кого скасовує відлік і скидає обидва секрети. Вихід через кнопку або повернення браузером до лобі звільняє місце.
-- Підтверджений код приховано; власний код можна відкрити на 3 секунди. Секрети не потрапляють у публічні знімки кімнат і не надсилаються супернику. Вони живуть лише в пам’яті сервера й власного клієнта. Після відліку починається гра.
-- Сервер випадково обирає першого гравця. Ходи чергуються; бик означає правильну цифру на правильній позиції, корова — на іншій. Чотири бики завершують гру перемогою. Повторні числа, чужий хід і застарілі запити відхиляються.
-- Кожен бачить свою історію спроб та кількість спроб суперника. Чужі спроби й секрети не надсилаються.
-- Під час гри вихід заблоковано на сервері; браузерний «Назад» повертає на поле. Замість виходу є «Здатися» з підтвердженням: суперник перемагає. Під час відновлення з’єднання годинник ходу зупиняється. Після повернення обох гравців продовжується з тим самим залишком. Якщо гравець не повернувся за 30 секунд, суперник перемагає.
-- На кожний хід дається 30 секунд; прострочення означає поразку. Дедлайн перевіряє сервер, зокрема перед прийманням ходу.
-- Після результату обидва можуть погодитися на реванш у тій самій кімнаті. Рахунок серії зберігається, секрети й історія скидаються, починається нове загадування. Можна також повернутися в лобі. Секрети видаляються після завершення; матч — коли кімната порожня.
-- У Node.js відновлення працює в межах поточного процесу сервера. У Cloudflare сесії, матчі й дедлайни зберігаються між перезапусками об’єкта; строк повернення залишається 30 секунд. Якщо сховище браузера заблоковано, токен живе лише до перезавантаження сторінки.
-- Введення цифр, поява спроби, оцінка, зміна ходу та перемога мають короткі анімації. Системна опція зменшення руху їх вимикає.
-
-## Перевірки
+Start the server and frontend in separate terminals:
 
 ```sh
-npm run test:lobby
-npm run test:game
-npm run test:lifecycle
-npx tsc -p apps/web/tsconfig.json --noEmit --incremental false
-npx nx run-many -t lint
-npx nx build websocket-server
-npx nx build web
+# Terminal 1 — ws://localhost:3001
+pnpm dev:server
 ```
 
-`test:lobby` перевіряє збереження імені, недоступність сховища, створення та синхронізацію кімнат, ліміт учасників, валідацію, очищення після відключення, синхронізацію відліку, його скасування та завершення, валідацію секретів, заборону заміни та відсутність витоку коду супернику й спостерігачам. Інтеграційний тест запускає тимчасовий сервер на вільному локальному порту.
+```sh
+# Terminal 2 — http://localhost:3100
+pnpm dev:web
+```
 
-## UI kit та Storybook
+Open [localhost:3100](http://localhost:3100) in two browsers. The Node.js server keeps state in memory; restarting it clears rooms.
 
-Спільні компоненти й дизайн-токени зберігаються в `libs/ui`. Запуск: `npm run storybook`, збірка: `npm run build-storybook`, перевірка типів: `npm run typecheck:ui`, перевірка ізоляції: `npm run test:ui-isolation`. Деталі та правила розширення — у [документації UI kit](libs/ui/README.md).
+To use the Cloudflare runtime locally instead, set `NEXT_PUBLIC_WS_URL=ws://127.0.0.1:8787` in `.env.local`, run `pnpm dev:cloudflare` in place of `dev:server`, and restart the frontend. Wrangler persists local state separately from production.
 
-`test:game` перевіряє підрахунок биків/корів, черговість, приватність історії, повторні та застарілі запити, перемогу, заборону виходу, здачу й розрив з’єднання.
+## Quality checks
 
-## Мови
+```sh
+pnpm test                  # Game, sessions, Cloudflare runtime, UI boundaries, i18n and PWA
+pnpm typecheck             # Frontend, UI kit and Cloudflare server
+pnpm lint                  # Application and library lint checks
+pnpm build:web             # Production frontend
+pnpm build:cloudflare      # Worker bundle validation; does not deploy
+pnpm storybook             # Component explorer on localhost:6006
+pnpm build-storybook       # Static UI kit in dist/storybook/ui
+```
 
-Українська й англійська доступні через перемикач над ігровим екраном. Вибір зберігається в cookie; до першого ручного вибору використовується мова браузера, резервна — українська. Можна перемикати мову під час гри без втрати введеної спроби та з’єднання. Один URL кімнати працює для різних мов. [Архітектура локалізації](libs/i18n/README.md), перевірка: `npm run test:i18n`.
+Tests cover scoring, private snapshots, stale commands, turn expiry, reconnects, rematches, Durable Object hibernation and alarms. Integration tests start local servers and need permission to bind local ports. Storybook interaction examples and its accessibility panel are available for manual component review; they are not automated accessibility certification.
 
-`test:lifecycle` перевіряє серверний дедлайн, поразку за часом, двосторонній реванш, рахунок серії, захист від ходів попереднього матчу, відновлення приватного стану, паузу таймера, завершення пільгового періоду, заміну сокета та очищення кімнати. Тривалості в інтеграційних сценаріях скорочені; окремо перевіряється стандартний ліміт ходу 30 секунд.
+GitHub Actions runs checks on pull requests and pushes to `main`. The separate deployment workflow publishes the Worker after its backend checks pass. Vercel builds the frontend independently.
 
-## Встановлення як застосунку (PWA)
+## Deployment and scope
 
-Маніфест `/manifest.webmanifest` та PNG-іконки задають назву, старт із лобі та окреме вікно. Кнопка «Встановити гру» у лобі відкриває системне встановлення там, де браузер його підтримує; інакше показує інструкцію. На iPhone/iPad використовуйте Safari → Поділитися → На початковий екран → Відкривати як вебзастосунок.
+The live frontend runs on **Vercel**; WebSocket connections go to **Cloudflare Workers and Durable Objects**. See [deployment instructions](DEPLOYMENT.md) for environment variables, API tokens and automated deployment.
 
-Service worker реєструється лише у production та безпечному контексті (HTTPS або localhost). Він кешує тільки автономний екран і його ресурси. Сторінки кімнат, серверні відповіді, числа та токени не кешуються. Після першого онлайн-відкриття й активації worker при втраті інтернету навігація показує автономний екран із повторною спробою. Грати без інтернету неможливо. Повернення зв’язку на автономному екрані повторно відкриває поточне посилання.
+This is a small multiplayer application, not a globally sharded game service. The production adapter currently uses one Durable Object, limited to **16 rooms and 64 connections**. There are no accounts, cross-device profiles, leaderboards or permanent match history. Browser session tokens support reconnects within the recovery window.
 
-Оновлення worker чекає закриття всіх відкритих вікон гри. `skipWaiting`, примусового перезавантаження та перехоплення активної сторінки немає. При зміні автономних ресурсів піднімайте версію `CACHE` у `apps/web/public/sw.js`.
+## Further reading
 
-Перевірка: `npm run test:pwa`. Для браузерної перевірки зберіть `next build apps/web` і запустіть `next start apps/web --port 3102`. На localhost PWA доступна для перевірки; звичайна HTTP-адреса комп’ютера в локальній мережі не замінює HTTPS на телефоні.
-
-Публікація відкладена до вибору домену й хостингу. Для неї потрібні HTTPS для Next.js, постійно запущений WebSocket-сервер і його адреса `wss://…` у `NEXT_PUBLIC_WS_URL` **перед збіркою**. Reverse proxy має підтримувати WebSocket Upgrade; сертифікати та DNS налаштовуються на вибраному хостингу. Встановлення не переносить автоматично профіль між різними браузерами чи окремими сховищами встановленого застосунку.
-
-## Підготовка до хостингу
-
-Для Vercel і Cloudflare Durable Objects додані конфігурації та [покрокова інструкція](DEPLOYMENT.md). Звичайний Node.js-сервер зберігає дані в пам’яті, Cloudflare-адаптер — у стійкому SQLite-сховищі з відновленням дедлайнів через alarms. Публікація ще не виконувалась.
+- [Architecture and trade-offs](docs/architecture.md)
+- [Game lifecycle and recovery rules](docs/gameplay.md) — Ukrainian
+- [Cloudflare adapter](apps/cloudflare-server/README.md) and [game services](apps/websocket-server/README.md)
+- [UI kit](libs/ui/README.md), [localization](libs/i18n/README.md) and [protocol](libs/shared/README.md)

@@ -1,37 +1,43 @@
 # Cloudflare game server
 
-Worker приймає WebSocket на `/`, перевіряє точний `Origin` і передає з’єднання в SQLite-backed Durable Object `GameLobby`. `/health` повертає лише статус сервісу.
+Production WebSocket adapter for the shared game services. The Worker accepts upgrades at `/`, checks the exact request origin and forwards connections to the SQLite-backed `GameLobby` Durable Object. `GET /health` returns the service status.
 
-Для першого розгортання один об’єкт `public-v1` координує до 16 кімнат і 64 з’єднань, включно зі спостерігачами. Це свідоме обмеження першої версії, а не масштабування по об’єкту на кімнату. Не змінюйте ім’я об’єкта для масштабування: це створить незалежні лобі. Для більшого навантаження потрібно додати маршрутизацію клієнтів та каталог кімнат.
+## Run locally
 
-## Локально
-
-Із кореня репозиторію:
+Run commands from the repository root after installing dependencies:
 
 ```sh
-pnpm install --frozen-lockfile
 pnpm dev:cloudflare
 ```
 
-Адреса: `ws://127.0.0.1:8787`. У вебзастосунку задайте `NEXT_PUBLIC_WS_URL=ws://127.0.0.1:8787` і запустіть Next.js на 3100. У dev-конфігурації дозволені лише перелічені локальні origins. Стан Wrangler зберігає у `.wrangler/` (не входить до Git). Звичайний Node.js-сервер лишається доступним окремо для локальної роботи.
+Set `NEXT_PUBLIC_WS_URL=ws://127.0.0.1:8787` in `apps/web/.env.local`, then run `pnpm dev:web` in another terminal. Restart Next.js after changing the variable. The development configuration allows the local origins listed in [wrangler.jsonc](wrangler.jsonc). Wrangler stores local state in `.wrangler/`, which is excluded from Git and separate from production.
 
-## Модулі й відновлення
+## Modules
 
-- `worker.ts` — маршрути, список дозволених origins, binding Durable Object.
-- `lobby.ts` — WebSocket Hibernation API, attachments, перевірка сесій, черга повідомлень, обробка alarm.
-- `engine.ts` — збирання існуючих ігрових сервісів; нової копії правил гри немає.
-- `deadlines.ts` — планувальник без `setTimeout`; callbacks відбудовуються з абсолютних дедлайнів.
-- `storage.ts` — атомарне збереження змінених кімнат, матчів, секретів, сесій та наступного alarm. Окремі кімнати зберігаються окремими ключами; порожні видаляються.
+| Module | Responsibility |
+| --- | --- |
+| [worker.ts](src/worker.ts) | HTTP routing, origin checks and the Durable Object binding. |
+| [lobby.ts](src/lobby.ts) | Hibernating WebSockets, socket attachments, sessions, queued responses and alarms. |
+| [engine.ts](src/engine.ts) | Composition of shared game services and restoration of saved state. |
+| [deadlines.ts](src/deadlines.ts) | A scheduler that reconstructs callbacks from absolute deadlines without using `setTimeout`. |
+| [storage.ts](src/storage.ts) | Atomic persistence of changed records and the next alarm; removal of empty rooms. |
 
-Спільні сервіси в `apps/websocket-server/src` отримують планувальник через залежність. У Node.js це системні таймери, у Cloudflare — найближчий alarm. Перед прийманням команд обробляються прострочені дедлайни. Стан записується до надсилання підтверджень гравцям. Після гібернації сокети відновлюються за attachments; після втрати самих сокетів запускається звичайний 30-секундний період повернення.
+The game services live in [the shared server implementation](../websocket-server/README.md). They receive a scheduler dependency: system timers in Node.js and Durable Object alarms here. Expired deadlines are processed before incoming commands. State is persisted before queued acknowledgements are sent to players.
 
-Клієнт надсилає транспортний heartbeat кожні 5 секунд. Cloudflare відповідає через `setWebSocketAutoResponse`, не будячи об’єкт. Alarm також перевіряє 20-секундний строк активності з’єднань; обрив переводить гравця у відновлення. Неавторизоване з’єднання має 10 секунд на handshake. Приймаються текстові повідомлення до 4096 байтів і до 60 ігрових повідомлень за 10 секунд на з’єднання. Це базові обмеження, а не захист від усіх видів зловживань.
+Socket attachments restore connection identity after hibernation. If sockets are lost, the usual 30-second reconnect window applies. Deployments can interrupt connections; persistence does not extend the recovery window or reset a turn deadline.
 
-Деплой може обірвати з’єднання. Персистентність дозволяє відновити сесію й матч, але 30-секундний строк повернення та дедлайн ходу залишаються чинними. Гібернація сама по собі їх не подовжує.
+## Capacity and connection handling
 
-Безкоштовний тариф Cloudflare має квоти на запити, обчислення та сховище; ця конфігурація не гарантує безлімітний безкоштовний хостинг. Alarms і активні матчі теж витрачають квоту. Workers Free потребує SQLite-backed Durable Objects (`new_sqlite_classes` у міграції).
+One named object, `public-v1`, coordinates a maximum of **16 rooms and 64 connections**, including lobby observers. Scaling beyond this design requires a room directory and connection routing across objects. Renaming the object creates a separate lobby rather than distributing existing rooms.
 
-## Перевірки
+- Clients send a heartbeat every 5 seconds. `setWebSocketAutoResponse` replies without waking a hibernating object.
+- Alarms also check a 20-second connection activity lease.
+- A connection has 10 seconds to complete its session handshake.
+- Messages must be text, at most 4096 bytes, with at most 60 game messages per 10 seconds per connection.
+
+These are basic resource limits, not comprehensive abuse prevention. Active games, alarms and storage operations consume Cloudflare quotas. The migration uses `new_sqlite_classes`; this configuration does not promise unlimited free hosting.
+
+## Checks and deployment
 
 ```sh
 pnpm typecheck:cloudflare
@@ -39,6 +45,6 @@ pnpm test:cloudflare
 pnpm build:cloudflare
 ```
 
-Збірка використовує `--dry-run` і нічого не публікує. Runtime-тест запускає локальний workerd, примусово гібернує об’єкт із відкритими сокетами та перевіряє таймери, відновлення, реванш і приватність.
+The build is a **dry run** and does not publish anything. Runtime tests start local workerd, force hibernation with open sockets, and verify deadlines, recovery, rematches and private state. They require local port access.
 
-Публікація описана в [DEPLOYMENT.md](../../DEPLOYMENT.md).
+[DEPLOYMENT.md](../../DEPLOYMENT.md) documents production origins, credentials and the GitHub Actions deployment workflow. See the [architecture overview](../../docs/architecture.md) for the end-to-end data flow.

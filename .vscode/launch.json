@@ -22,7 +22,7 @@
       ],
       "sourceMaps": true,
       "outFiles": [
-        "${workspaceFolder}/apps/websocket-server/dist/**/*.(m|c|)js",
+        "${workspaceFolder}/dist/apps/websocket-server/**/*.js",
         "!**/node_modules/**"
       ]
     }

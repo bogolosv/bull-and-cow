@@ -1,60 +1,79 @@
 # Bull & Cow UI kit
 
-Бібліотека React-компонентів, яку використовує застосунок. Storybook показує ті самі компоненти та стилі, а не їхні копії. UI не імпортує Next.js, WebSocket, серверні типи чи `GameProvider`: дані й обробники передаються через props.
+The React components used by the application, with their real styles and states available in Storybook. Components receive data, labels and callbacks through props; they do not import Next.js, WebSocket, server types or `GameProvider`.
 
-## Запуск
+## Explore and check
+
+Run from the repository root after installing dependencies:
 
 ```sh
-npm run storybook          # http://localhost:6006
-npm run build-storybook    # dist/storybook/ui
-npm run typecheck:ui
+pnpm storybook             # http://localhost:6006
+pnpm build-storybook       # dist/storybook/ui
+pnpm typecheck:ui
+pnpm test:ui-isolation
 ```
 
-Nx-еквіваленти: `npx nx storybook ui`, `npx nx build-storybook ui`, `npx nx typecheck ui`.
+Storybook includes Foundations, Actions, Forms, Display, Feedback, Game and Layouts, with Controls, Autodocs and an accessibility panel. Composed game screens run without a server. Examples include long names, errors, loading/disabled controls, an empty lobby, secret selection and match results.
 
-## Використання
+Button, field and popover stories include `play` interactions for clicks, input, disabled behavior and keyboard controls. These run when the corresponding story is opened. The accessibility addon helps inspect violations; it is not a blocking automated CI check.
 
-Імпортуйте глобальну основу один раз у кореневому layout:
+## Usage
+
+Import the global foundation once in the application root:
 
 ```tsx
-import '@bull-and-cow/ui/styles/index.css';
-import { Button, Panel, TextField } from '@bull-and-cow/ui';
+import "@bull-and-cow/ui/styles/index.css";
+import { Button, Panel, TextField } from "@bull-and-cow/ui";
+```
 
+In a component with application-owned state and callbacks:
+
+```tsx
 <Panel>
-  <TextField label="Ім’я" value={name} onChange={event => setName(event.target.value)} />
-  <Button onClick={createRoom} loading={pending}>Створити кімнату</Button>
+  <TextField
+    label="Your name"
+    value={name}
+    onChange={(event) => setName(event.target.value)}
+  />
+  <Button onClick={createRoom} loading={pending}>
+    Create a room
+  </Button>
 </Panel>
 ```
 
-`Button`: варіанти `primary`, `secondary`, `soft`, `ghost`; розміри `small`, `medium`, `large`; нативні button props, іконки, loading і disabled. Loading блокує повторне натискання. Для навігації використовуйте `LinkButton` або адаптер роутера на рівні застосунку.
+`Button` supports `primary`, `secondary`, `soft` and `ghost` variants; `small`, `medium` and `large` sizes; native button props; icons; and loading/disabled states. Loading prevents repeat clicks. Use `LinkButton` or an application-level router adapter for navigation.
 
-`TextField`: нативні input props, автоматичний зв’язок label/input, стани disabled/error, іконки, `aria-invalid` і `aria-describedby`.
+`TextField` supports native input props, associated labels, error and disabled states, icons, `aria-invalid` and `aria-describedby`. Application code should obtain the example's labels from its dictionary.
 
-Інші компоненти: `Badge`, `Panel`, `Divider`, `HelpPopover`, `ConnectionStatus`, `Alert`, `Countdown`, `WaitingDots`, `Mascot`, `PlayerCard`, `RoomCard`, `EmptyState`, `GameTitle`, `RoomHeading`, `SecretCodeInput`, `SecretCodePreview`, `ReadinessIndicator`. Композиція: `GameLayout`, `FormStack`, `SectionHeading`, `RoomList`, `PlayerPair`, `StatusArea`, `Note`.
+## Component groups
 
-`Countdown` отримує секунди й прогрес 0–1. Він лише відображає стан: джерело часу й синхронізація залишаються в застосунку. `GameLayout` отримує toolbar через слот, не залежить від контексту гри.
+| Group | Examples |
+| --- | --- |
+| Controls and feedback | `Button`, `LinkButton`, `TextField`, `HelpPopover`, `Alert`, `ConnectionStatus`, `LanguageSelect` |
+| Layout and display | `Panel`, `Badge`, `Divider`, `GameLayout`, `FormStack`, `SectionHeading`, `StatusArea`, `Note` |
+| Lobby | `Mascot`, `GameTitle`, `RoomHeading`, `RoomCard`, `RoomList`, `PlayerCard`, `PlayerPair`, `EmptyState` |
+| Preparation | `SecretCodeInput`, `SecretCodePreview`, `ReadinessIndicator`, `Countdown`, `WaitingDots` |
+| Match | `GuessRow`, `TurnIndicator`, `GameTimer`, `SurrenderControl`, `MatchResult`, `RematchControl` |
 
-## Дизайн-токени
+The [public exports](src/index.ts) are the source of truth for available components and types.
 
-Єдине джерело значень — `src/styles/tokens.css`:
+`Countdown` receives seconds and progress from 0 to 1; time synchronization stays in the application. `GameLayout` accepts a toolbar slot without depending on game context. `SecretCodeInput` is controlled and highlights duplicate digits. `SecretCodePreview` reveals the code for three seconds and hides it on window blur.
 
-- Палітра OKLCH та семантичні CSS custom properties: `--color-canvas`, `--color-ink`, `--color-accent`, `--color-danger` тощо.
-- `--space-*` — спільна шкала відступів у rem; `--size-*` — розміри елементів та ілюстрацій.
-- `--font-*`, `--radius-*`, `--shadow-*`, `--motion-*`, `--opacity-*` — типографіка, форма, глибина, рух і стани.
-- Семантичні значення можна перевизначити на контейнері без зміни компонента. Приклад є в **Foundations / Tokens**.
-- Кожен компонент має власний CSS Module. Імпорт стилів іншого компонента або звернення до його внутрішніх класів заборонені; композиція відбувається тільки через публічні props і слоти.
-- Breakpoints: 360px, 520px, 900px. Літерали залишені в media queries, оскільки CSS custom properties там не підтримуються. SVG-координати й геометрія ілюстрацій також залишаються локальними.
-- `prefers-reduced-motion` вимикає декоративні анімації.
+`GameTimer` displays remaining time, pauses and the last-five-seconds accent. `RematchControl` displays the series score and rematch/leave actions. `MatchResult` supports completion reasons and an actions slot. Validation and game decisions belong to the server and application, not these presentation components.
 
-`token-catalog.ts` містить тільки назви змінних для каталогу; значення не дублюються в TypeScript.
+## Design tokens
 
-## Storybook
+[src/styles/tokens.css](src/styles/tokens.css) is the source of reusable values:
 
-Розділи: Foundations, Actions, Forms, Display, Feedback, Game, Layouts. Є Controls, Autodocs, вкладка доступності, приклади довгих імен, помилок, disabled/loading, порожнього лобі, очікування й відліку. Демонстраційні екрани працюють без сервера.
+- OKLCH colors and semantic properties such as `--color-canvas`, `--color-ink`, `--color-accent` and `--color-danger`.
+- `--space-*` spacing in rem and `--size-*` element dimensions.
+- `--font-*`, `--radius-*`, `--shadow-*`, `--motion-*` and `--opacity-*` scales.
 
-Stories кнопки, поля та підказки містять `play`-перевірки: натискання, блокування disabled, введення тексту, відкриття та закриття клавіатурою. Вони запускаються під час відкриття відповідної story. Accessibility addon показує порушення для подальшої роботи; він поки не є блокуючим CI-тестом.
+Semantic values can be overridden on a container. **Foundations / Tokens** demonstrates them; `token-catalog.ts` lists token names without duplicating their values. Breakpoints remain literal values in media queries. SVG coordinates remain local to their illustrations. Decorative motion respects `prefers-reduced-motion`.
 
-Кожен компонент — окрема папка:
+## Component isolation
+
+Each component owns its source, CSS Module, stories and entry point:
 
 ```text
 src/components/button/
@@ -64,16 +83,12 @@ src/components/button/
   index.ts
 ```
 
-Локальні hooks, допоміжні функції та тести, якщо вони потрібні, також розміщуйте в папці компонента. Не об’єднуйте кілька компонентів в одному файлі. Спільними залишаються токени й базовий reset у `src/styles`; комбіновані приклади екранів зберігаються в `src/patterns`.
+Keep component-specific hooks and helpers in that directory. Compose through public props and slots rather than importing another component's styles or addressing its internal classes. Shared tokens and the reset live in `src/styles`; composed screen stories live in `src/patterns`.
 
-Новий компонент додавайте в `src/components/<name>`, експортуйте через локальний `index.ts` і публічний `src/index.ts`, додавайте `*.stories.tsx` зі станами. `npm run test:ui-isolation` перевіряє структуру, локальні CSS-імпорти, наявність класів та незалежність від застосунку. Спочатку використайте наявний токен; новий додавайте до `tokens.css` тільки за потреби нової семантичної ролі.
+To add a component, create its directory, export it through the local `index.ts` and [public entry point](src/index.ts), then add stories covering relevant states. Prefer an existing token before adding a new semantic value. `test:ui-isolation` checks folder structure, local style imports, class usage and independence from the application.
 
-`SecretCodeInput` — контрольоване текстове поле з цифровою клавіатурою, чотирма плитками й підсвічуванням повторів. `SecretCodePreview` приховує код і дозволяє відкрити його на 3 секунди; при втраті фокусу вікном код знову приховується. `ReadinessIndicator` отримує лише статуси готовності. Серверні правила та підтвердження належать застосунку, а не UI kit.
+## Localization
 
-Ігрові компоненти: `GuessRow` — анімована спроба з оцінкою; `TurnIndicator` — поточний хід; `SurrenderControl` — підтвердження/скасування здачі; `MatchResult` — перемога або поразка з причиною. Stories у `Game` та складені приклади `Layouts/Match` працюють без сервера.
+Components with built-in text receive a required `labels` prop. The application selects the dictionary, including accessible labels. `LanguageSelect` receives its value, options and callback; it does not manage locale persistence.
 
-## Мови
-
-Компоненти з власними текстами отримують обов’язковий `labels` prop. Наприклад: `<RoomCard labels={messages.ui.RoomCard} playerName={name} />`. Словник обирає застосунок; сам UI не імпортує i18n і залишається ізольованим. `LanguageSelect` отримує значення, список опцій та callback. У Storybook мова перемикається через кнопку з глобусом; інтерактивні перевірки враховують обрану мову.
-
-`GameTimer` показує залишок часу, паузу та акцент останніх 5 секунд, враховуючи зменшення руху. `RematchControl` показує рахунок серії, згоду на реванш і вихід. Обидва компоненти ізольовані, отримують стан і перекладені підписи через props та мають власні stories у `Game`. `MatchResult` підтримує завершення за часом і слот `actions` для керування реваншем.
+Storybook provides a language toolbar and adapters for localized examples. See [localization](../i18n/README.md) for dictionary ownership and [architecture](../../docs/architecture.md) for the application boundaries.

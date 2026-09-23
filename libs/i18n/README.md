@@ -1,20 +1,57 @@
-# Локалізація
+# Localization
 
-`uk.ts` — український словник і тип `Messages`; `en.ts` перевіряється через `satisfies Messages`. Тексти згруповано в `app`, `ui` (за компонентами) та `errors` (за кодами протоколу).
+Typed Ukrainian and English dictionaries, locale negotiation and React bindings. Game URLs and protocol messages are independent of the selected language.
 
-`resolveLocale` спочатку враховує cookie `bull-cow-locale`, потім підтримувані мови заголовка `Accept-Language` з урахуванням ваги `q`. Резервна мова — українська. Next.js визначає мову під час запиту для HTML та metadata, тому немає початкового перемикання після гідратації.
+## Dictionaries and locale selection
 
-`I18nProvider` та `useI18n` доступні через `@bull-and-cow/i18n/react`. Ручний вибір зберігається в cookie на рік. Мова не входить у URL кімнати. Перемикання оновлює контекст, `html.lang` і metadata без перезавантаження, зміни ключів компонентів або перепідключення до WebSocket.
+[uk.ts](src/uk.ts) defines the `Messages` type; [en.ts](src/en.ts) is checked with `satisfies Messages`. Text is grouped into `app`, component-specific `ui` labels and protocol `errors`.
+
+`resolveLocale` prefers the `bull-cow-locale` cookie, then supported languages from `Accept-Language`, respecting quality weights. Ukrainian is the fallback. Next.js resolves the initial locale on the server for HTML and metadata.
+
+## React usage
+
+`I18nProvider` and `useI18n` are exported from `@bull-and-cow/i18n/react`. Wrap the application with a provider using the server-resolved `initialLocale`.
 
 ```tsx
-const {messages, locale, setLocale} = useI18n();
-<SecretCodeInput labels={messages.ui.SecretCodeInput} value={code} onChange={setCode} />
+import { useState } from "react";
+import { useI18n } from "@bull-and-cow/i18n/react";
+import { SecretCodeInput } from "@bull-and-cow/ui";
+
+export function CodeField() {
+  const { messages } = useI18n();
+  const [code, setCode] = useState("");
+  return (
+    <SecretCodeInput
+      labels={messages.ui.SecretCodeInput}
+      value={code}
+      onChange={setCode}
+    />
+  );
+}
 ```
 
-UI kit не імпортує i18n і не читає контекст: усі тексти, зокрема доступні підписи та валідація, надходять через props. Storybook має перемикач мови в toolbar; адаптери лише для stories передають словники та локалізовані демонстраційні тексти.
+Use this example within a client component. `useI18n` also exposes `locale` and `setLocale`. Manual selection is saved in a cookie for one year. Switching languages updates context, `html.lang`, the document title and description without reloading, remounting the game or reconnecting its WebSocket.
 
-Сервер повертає `{type: 'error', payload: {code: 'NOT_YOUR_TURN'}}`. Коди визначені схемою `errorCodeSchema` у shared. Клієнт зберігає код і перекладає його під час відображення, тому наявна помилка також змінює мову. Імена користувачів та секретні цифри не перекладаються.
+The [UI kit](../ui/README.md) receives translated labels through props and does not import this library. Storybook-only adapters supply dictionaries and localized sample data from the language toolbar.
 
-`formatCount` використовує `Intl.PluralRules` та `Intl.NumberFormat` для спроб і секунд. Нові числові повідомлення слід форматувати так само, а не склеювати число з єдиною формою іменника.
+## Errors and numbers
 
-Для нової мови потрібно додати словник, розширити `Locale`, `isLocale`, `getMessages`, форми множини та опції перемикачів застосунку й Storybook. `npm run test:i18n` перевіряє повноту словників, серверні коди, визначення мови та форми множини.
+Servers send stable codes, for example `{ type: "error", payload: { code: "NOT_YOUR_TURN" } }`. The client translates a code when rendering, so an existing error updates when the language changes. Player names and secret codes are not translated.
+
+`formatCount` uses `Intl.PluralRules` and `Intl.NumberFormat` for attempts and seconds. Use plural-aware formatting for new numeric messages instead of joining a number to a single noun form.
+
+## Adding a language
+
+1. Add a dictionary satisfying `Messages`.
+2. Extend `Locale`, `isLocale`, `getMessages` and plural forms in [src/index.ts](src/index.ts).
+3. Add the locale to the application and Storybook selectors.
+4. Update locale negotiation and pluralization tests for the new language.
+
+Run from the repository root:
+
+```sh
+pnpm test:i18n
+pnpm typecheck
+```
+
+Tests check dictionary parity, protocol error coverage, locale selection and plural forms.
