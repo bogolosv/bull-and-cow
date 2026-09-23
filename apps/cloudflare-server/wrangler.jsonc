@@ -15,7 +15,7 @@
     "production": {
       "name": "bull-cow-game",
       "durable_objects": { "bindings": [{ "name": "GAME_LOBBY", "class_name": "GameLobby" }] },
-      "vars": { "ALLOWED_ORIGINS": "" }
+      "vars": { "ALLOWED_ORIGINS": "https://bull-and-cow.vercel.app" }
     }
   }
 }
