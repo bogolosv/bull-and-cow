@@ -35,6 +35,13 @@ export default async function RootLayout({
   const locale = await getRequestLocale();
   return (
     <html lang={locale}>
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2000177386752711"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <I18nProvider initialLocale={locale}>
           <GameProvider>{children}</GameProvider>
